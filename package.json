@@ -1,0 +1,16 @@
+{
+  "name": "north-vows-portfolio",
+  "version": "1.0.0",
+  "description": "Minimalist Fine Art Photography Portfolio",
+  "main": "index.html",
+  "scripts": {
+    "dev": "npx http-server ./ -p 3000 -c-1"
+  },
+  "keywords": [
+    "photography",
+    "portfolio",
+    "minimalist"
+  ],
+  "author": "North Vows",
+  "license": "ISC"
+}

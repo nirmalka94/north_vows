@@ -1,0 +1,12 @@
+# Secrets — contains live DB credentials. Copy api/config.example.php to api/config.php on the server.
+api/config.php
+
+# User uploads (live data lives on the server)
+uploads/*
+!uploads/.htaccess
+
+# Design source archives (not used by the site)
+*.zip
+
+node_modules/
+.DS_Store
