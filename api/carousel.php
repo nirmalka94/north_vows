@@ -13,11 +13,12 @@
  */
 
 header('Content-Type: application/json; charset=UTF-8');
-header('Cache-Control: public, max-age=300');
+header('Cache-Control: no-cache'); // admin uploads/removals show up straight away
 
 const CAROUSEL_DIR    = __DIR__ . '/../Photo_carousel';
 const CAROUSEL_URL    = 'Photo_carousel';
 const WEB_DIR_NAME    = '_web';
+const REMOVED_DIR_NAME = '_removed';   // photos removed in the admin panel (recoverable)
 const SIZES           = ['large' => 1600, 'medium' => 1000, 'thumb' => 640];
 const JPEG_QUALITY    = 78;
 const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp'];
@@ -90,7 +91,7 @@ function webCopy(string $category, string $file, string $sizeName, int $maxWidth
 $categories = [];
 if (is_dir(CAROUSEL_DIR)) {
     $folders = array_filter(scandir(CAROUSEL_DIR), function ($f) {
-        return $f[0] !== '.' && $f !== WEB_DIR_NAME && is_dir(CAROUSEL_DIR . "/$f");
+        return $f[0] !== '.' && $f !== WEB_DIR_NAME && $f !== REMOVED_DIR_NAME && is_dir(CAROUSEL_DIR . "/$f");
     });
     natcasesort($folders);
 
@@ -114,6 +115,8 @@ if (is_dir(CAROUSEL_DIR)) {
                 'width'  => $size[0] ?? null,
                 'height' => $size[1] ?? null,
                 'alt'    => "$name photography by North Vows Photography, Kitchener-Waterloo",
+                'folder' => $folder,   // used by the admin panel to remove a photo
+                'file'   => $file,
             ];
         }
         if ($photos) {

@@ -75,6 +75,10 @@ class APIManager {
     // Fetch all settings in one request
     getSettings()                  { return this._get('get_settings'); }
 
+    // Portfolio carousel folders (Photo_carousel/<Category>/)
+    uploadCarouselPhoto(formData)      { return this._postForm('carousel_upload', formData); }
+    removeCarouselPhoto(category, file) { return this._post('carousel_remove', { category, file }); }
+
     // Upload a standalone image (hero bg, etc.) — returns { url }
     async uploadImage(file) {
         const fd = new FormData();
@@ -563,7 +567,8 @@ async function hydrateSiteUI() {
     // 8. Instagram Profile
     const instaHandle = state.settings.instaHandle || DEFAULT_SETTINGS.instaHandle;
     let instaAvatar = state.settings.instaAvatar || DEFAULT_SETTINGS.instaAvatar;
-    if (instaAvatar === 'Assets/logo.png') instaAvatar = 'Assets/logo-sm.png'; // same logo, much smaller file
+    // Only use it if it is an image (a profile page link would show as a broken image)
+    if (instaAvatar === 'Assets/logo.png' || !/\.(jpe?g|png|webp|gif|avif)(\?|$)/i.test(instaAvatar)) instaAvatar = 'Assets/logo-sm.png';
     document.getElementById('instaHandle').textContent = instaHandle;
     document.getElementById('instaAvatar').src = instaAvatar;
     document.getElementById('instaFollowBtn').href = `https://instagram.com/${instaHandle.replace('@', '')}`;
@@ -980,6 +985,7 @@ function refreshAdminViews() {
     renderAdminInstagramTable();
     populateAdminSettingsForm();
     renderContentEditors();
+    renderCarouselAdmin();
 }
 
 // --- TAB 1: ALBUM MANAGEMENT LOGIC ---
@@ -2527,7 +2533,7 @@ const carouselState = { folderCategories: [], categories: [], active: 'all', loa
 
 async function loadPhotoCarousel() {
     try {
-        const res = await fetch(CAROUSEL_API);
+        const res = await fetch(`${CAROUSEL_API}?t=${Date.now()}`, { cache: 'no-store' });
         if (!res.ok || !(res.headers.get('content-type') || '').includes('json')) throw new Error('Carousel API unavailable');
         const data = await res.json();
         carouselState.folderCategories = (data.categories || []).filter(c => c.photos && c.photos.length);
@@ -2537,6 +2543,7 @@ async function loadPhotoCarousel() {
     }
     carouselState.loaded = true;
     refreshPortfolioCarousel();
+    renderCarouselAdmin();
 }
 
 // Folder categories + albums added in the admin panel, as one list of tabs.
@@ -2810,5 +2817,93 @@ if (adminShowPass) {
         adminShowPass.setAttribute('aria-pressed', String(show));
         adminShowPass.setAttribute('aria-label', show ? 'Hide passcode' : 'Show passcode');
         adminPassword.focus();
+    });
+}
+
+// ==========================================================================
+// Admin: Portfolio carousel folders — upload into a category, remove photos
+// ==========================================================================
+function renderCarouselAdmin() {
+    const list = document.getElementById('carouselAdminList');
+    const select = document.getElementById('carouselCategorySelect');
+    if (!list || !select) return;
+    const cats = carouselState.folderCategories;
+
+    const current = select.value;
+    select.innerHTML = cats.length
+        ? cats.map(c => `<option value="${escapeHtml(c.photos[0]?.folder || c.name)}">${escapeHtml(c.name)} (${c.photos.length})</option>`).join('')
+        : '<option value="">No categories yet — type a new one</option>';
+    if ([...select.options].some(o => o.value === current)) select.value = current;
+
+    if (!cats.length) {
+        list.innerHTML = `<p style="color:var(--color-muted); font-size:0.85rem;">${carouselState.loaded ? 'No portfolio photos yet. Upload some above.' : 'Loading…'}</p>`;
+        return;
+    }
+    list.innerHTML = cats.map(c => `
+        <div class="carousel-admin-category">
+            <h4>${escapeHtml(c.name)} <span>${c.photos.length} photo${c.photos.length === 1 ? '' : 's'}</span></h4>
+            <div class="carousel-admin-grid">
+                ${c.photos.map(p => `
+                    <figure class="carousel-admin-item">
+                        <img src="${escapeHtml(p.thumb)}" alt="" loading="lazy">
+                        ${p.folder ? `<button type="button" class="carousel-admin-remove" data-folder="${escapeHtml(p.folder)}" data-file="${escapeHtml(p.file)}" title="Remove from website" aria-label="Remove this photo">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                        </button>` : ''}
+                    </figure>`).join('')}
+            </div>
+        </div>`).join('');
+
+    list.querySelectorAll('.carousel-admin-remove').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            if (!confirm('Remove this photo from the website? (It is kept on the server in Photo_carousel/_removed.)')) return;
+            btn.disabled = true;
+            try {
+                const res = await db.removeCarouselPhoto(btn.dataset.folder, btn.dataset.file);
+                if (!res || !res.success) throw new Error(res?.error || 'Could not remove the photo.');
+                showToast('Photo removed from the website.');
+                await loadPhotoCarousel();
+            } catch (err) {
+                btn.disabled = false;
+                showToast(err.message || 'Could not remove the photo.', true);
+            }
+        });
+    });
+}
+
+const carouselUploadForm = document.getElementById('carouselUploadForm');
+if (carouselUploadForm) {
+    carouselUploadForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const status = document.getElementById('carouselUploadStatus');
+        const button = document.getElementById('carouselUploadBtn');
+        const newName = document.getElementById('carouselNewCategory').value.trim();
+        const category = newName || document.getElementById('carouselCategorySelect').value;
+        const files = [...document.getElementById('carouselFiles').files];
+        if (!category) { showToast('Choose a category or type a new one.', true); return; }
+        if (!files.length) { showToast('Choose one or more photos.', true); return; }
+
+        button.disabled = true;
+        let done = 0, failed = 0;
+        for (const file of files) {
+            status.textContent = `Uploading ${done + failed + 1} of ${files.length}…`;
+            try {
+                const fd = new FormData();
+                fd.append('category', category);
+                fd.append('file', await compressImage(file));
+                const res = await db.uploadCarouselPhoto(fd);
+                if (!res || !res.success) throw new Error(res?.error || 'Upload failed');
+                done++;
+            } catch (err) {
+                failed++;
+                console.warn('Carousel upload failed:', file.name, err);
+            }
+        }
+        button.disabled = false;
+        status.textContent = failed
+            ? `${done} uploaded, ${failed} failed. Please try the failed ones again.`
+            : `${done} photo${done === 1 ? '' : 's'} uploaded to ${category}.`;
+        carouselUploadForm.reset();
+        await loadPhotoCarousel();
+        showToast(failed ? 'Some photos could not be uploaded.' : 'Photos added to the portfolio.', failed > 0);
     });
 }

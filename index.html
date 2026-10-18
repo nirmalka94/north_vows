@@ -40,7 +40,7 @@
 
     <!-- Stylesheet. Bump ?v= on every deploy so browsers fetch the new file
          (Hostinger tells browsers to cache CSS/JS for 7 days). -->
-    <link rel="stylesheet" href="style.css?v=20261019e">
+    <link rel="stylesheet" href="style.css?v=20261019f">
     <link rel="icon" type="image/png" href="Assets/logo.png">
 
     <!-- Google Business Schema Markup (JSON-LD) -->
@@ -199,6 +199,11 @@
                         <a href="#contact" class="intro-cta" data-track="intro_check_date">Check your date</a>
                         <a href="#pricing" class="intro-link">See packages &rarr;</a>
                     </div>
+                    <p class="about-social">Explore more of our work on
+                        <a href="https://www.instagram.com/thenorthvows" target="_blank" rel="noopener noreferrer" data-social="instagram">Instagram</a>
+                        <span aria-hidden="true">/</span>
+                        <a href="https://www.facebook.com/Northvowsphotography" target="_blank" rel="noopener noreferrer" data-social="facebook">Facebook</a>
+                    </p>
                 </div>
             </div>
         </div>
@@ -821,7 +826,7 @@
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
                                 </svg>
-                                <span class="admin-tab-text">Albums</span>
+                                <span class="admin-tab-text">Portfolio &amp; Albums</span>
                             </button>
                         </li>
                         <li>
@@ -881,6 +886,37 @@
                     <!-- Albums Management View -->
                     <div class="admin-view active" id="tab-albums">
                         <div class="admin-view-title">
+                            <span>Portfolio Photos</span>
+                        </div>
+
+                        <!-- Photo_carousel folders: what the Portfolio carousel and hero slider show -->
+                        <div class="admin-card" id="carouselAdmin">
+                            <h3 style="margin-bottom:0.5rem; font-size:1.1rem; text-transform:uppercase; letter-spacing:0.05em;">Portfolio Carousel</h3>
+                            <p style="font-size:0.82rem; color:var(--color-muted); margin-bottom:1.25rem; line-height:1.6;">These photos appear in the Portfolio carousel (one tab per category) and in the hero slider. Photos are resized automatically. Removed photos are kept on the server in <code>Photo_carousel/_removed</code>.</p>
+                            <form id="carouselUploadForm" class="admin-flex-row" style="align-items:flex-end;">
+                                <div class="admin-flex-col">
+                                    <label class="form-label" for="carouselCategorySelect">Category</label>
+                                    <select id="carouselCategorySelect" class="admin-select"></select>
+                                </div>
+                                <div class="admin-flex-col">
+                                    <label class="form-label" for="carouselNewCategory">Or new category</label>
+                                    <input type="text" id="carouselNewCategory" class="admin-input" placeholder="e.g. Engagements" maxlength="40">
+                                </div>
+                                <div class="admin-flex-col">
+                                    <label class="form-label" for="carouselFiles">Photos</label>
+                                    <input type="file" id="carouselFiles" class="admin-input" accept="image/jpeg,image/png,image/webp" multiple required>
+                                </div>
+                                <div class="admin-flex-col" style="flex:0; min-width:auto;">
+                                    <button type="submit" class="admin-btn" id="carouselUploadBtn">Upload</button>
+                                </div>
+                            </form>
+                            <p id="carouselUploadStatus" style="font-size:0.8rem; color:var(--color-muted); margin:-0.5rem 0 1rem;"></p>
+                            <div id="carouselAdminList">
+                                <!-- Categories and thumbnails rendered by JS -->
+                            </div>
+                        </div>
+
+                        <div class="admin-view-title" style="margin-top:2.5rem;">
                             <span>Manage Albums</span>
                         </div>
                         
@@ -1354,6 +1390,6 @@
 
     <!-- Scripts -->
     <!-- Bump ?v= on every deploy (see stylesheet note) -->
-    <script src="app.js?v=20261019e"></script>
+    <script src="app.js?v=20261019f"></script>
 </body>
 </html>

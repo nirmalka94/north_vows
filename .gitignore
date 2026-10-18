@@ -16,3 +16,6 @@ Photo_carousel/_web/
 
 # Full-size originals backed up by tools/compress_carousel.py (not for the website)
 Photo_carousel_originals/
+
+# Photos removed in the admin panel (kept on the server, recoverable)
+Photo_carousel/_removed/

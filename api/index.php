@@ -61,6 +61,18 @@ function requireAuth(PDO $pdo): void {
     }
 }
 
+function carouselDir(): string {
+    return dirname(__DIR__) . '/Photo_carousel';
+}
+
+/** Category = folder name inside Photo_carousel. Letters, numbers, spaces, _ and - only. */
+function carouselCategory(string $name): string {
+    $name = trim(preg_replace('/[^A-Za-z0-9 _-]+/', '', $name));
+    $name = preg_replace('/\s+/', '_', $name);
+    if ($name === '' || $name[0] === '_' || $name[0] === '.') return '';
+    return substr($name, 0, 60);
+}
+
 function ensureUploadDir(): void {
     if (!is_dir(UPLOAD_DIR)) {
         mkdir(UPLOAD_DIR, 0755, true);
@@ -475,6 +487,49 @@ switch ($action) {
 
         upsertSetting($pdo, 'instagram_last_sync', (string)time());
         respond(200, ['success' => true, 'synced' => $synced]);
+
+    // ── PORTFOLIO CAROUSEL FOLDERS (Photo_carousel/<Category>/) ──────────────
+    // Upload a photo into a category folder (creates the folder if new).
+    case 'carousel_upload':
+        requireAuth($pdo);
+        $category = carouselCategory($_POST['category'] ?? '');
+        if ($category === '') respond(400, ['error' => 'Please choose or type a category name.']);
+        $file = $_FILES['file'] ?? null;
+        if (!$file || $file['error'] !== UPLOAD_ERR_OK) respond(400, ['error' => 'No file received.']);
+        if ($file['size'] > MAX_UPLOAD_SIZE) respond(400, ['error' => 'File is too large.']);
+        $mime = mime_content_type($file['tmp_name']);
+        $exts = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
+        if (!isset($exts[$mime])) respond(400, ['error' => 'Only JPG, PNG or WEBP photos are allowed.']);
+
+        $dir = carouselDir() . '/' . $category;
+        if (!is_dir($dir) && !mkdir($dir, 0755, true)) respond(500, ['error' => 'Could not create the category folder.']);
+        $base = preg_replace('/[^A-Za-z0-9_-]+/', '_', pathinfo($file['name'], PATHINFO_FILENAME)) ?: 'photo';
+        $name = $base . '.' . $exts[$mime];
+        for ($i = 2; file_exists("$dir/$name"); $i++) $name = "{$base}_{$i}.{$exts[$mime]}";
+        if (!move_uploaded_file($file['tmp_name'], "$dir/$name")) respond(500, ['error' => 'Could not save the photo.']);
+        respond(200, ['success' => true, 'category' => $category, 'file' => $name]);
+
+    // Remove a photo from the website: moved to Photo_carousel/_removed/ (recoverable).
+    case 'carousel_remove':
+        requireAuth($pdo);
+        $body     = json_decode(file_get_contents('php://input'), true) ?: [];
+        $category = carouselCategory($body['category'] ?? '');
+        $fileName = basename((string)($body['file'] ?? ''));
+        $source   = carouselDir() . "/$category/$fileName";
+        if ($category === '' || $fileName === '' || !is_file($source)) respond(404, ['error' => 'Photo not found.']);
+
+        $trashDir = carouselDir() . "/_removed/$category";
+        if (!is_dir($trashDir) && !mkdir($trashDir, 0755, true)) respond(500, ['error' => 'Could not move the photo.']);
+        $target = "$trashDir/$fileName";
+        for ($i = 2; file_exists($target); $i++) $target = "$trashDir/" . pathinfo($fileName, PATHINFO_FILENAME) . "_$i." . pathinfo($fileName, PATHINFO_EXTENSION);
+        if (!rename($source, $target)) respond(500, ['error' => 'Could not move the photo.']);
+        // Drop the web-sized copies too
+        foreach (['large', 'medium', 'thumb'] as $size) {
+            @unlink(carouselDir() . "/_web/$size/$category/" . pathinfo($fileName, PATHINFO_FILENAME) . '.jpg');
+        }
+        // Remove the category folder once it is empty
+        if (count(array_diff(scandir(carouselDir() . "/$category"), ['.', '..'])) === 0) @rmdir(carouselDir() . "/$category");
+        respond(200, ['success' => true]);
 
     // ── STANDALONE IMAGE UPLOAD (hero bg, etc.) ───────────────────────────────
     case 'upload_image':

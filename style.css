@@ -4665,3 +4665,92 @@ a.detail-value-secondary {
 .lock-btn {
     flex-shrink: 0;
 }
+
+/* Admin: portfolio carousel manager */
+.carousel-admin-category {
+    margin-top: 1.5rem;
+}
+
+.carousel-admin-category h4 {
+    margin-bottom: 0.75rem;
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--color-primary);
+}
+
+.carousel-admin-category h4 span {
+    margin-left: 0.5rem;
+    font-weight: 400;
+    text-transform: none;
+    letter-spacing: 0;
+    color: var(--color-muted);
+}
+
+.carousel-admin-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
+    gap: 0.6rem;
+}
+
+.carousel-admin-item {
+    position: relative;
+    margin: 0;
+    aspect-ratio: 4 / 5;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    background-color: var(--bg-dark);
+}
+
+.carousel-admin-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.carousel-admin-remove {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: none;
+    background-color: rgba(10, 11, 13, 0.8);
+    color: #f3f4f6;
+    cursor: pointer;
+}
+
+.carousel-admin-remove:hover {
+    background-color: #ef4444;
+}
+
+.carousel-admin-remove svg {
+    width: 15px;
+    height: 15px;
+}
+
+/* About: links to Instagram / Facebook */
+.about-social {
+    margin-top: 1.5rem;
+    font-size: 0.9rem;
+    color: var(--color-secondary);
+}
+
+.about-social a {
+    display: inline-block;
+    padding: 0.35rem 0.1rem;
+    color: var(--color-accent);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+
+.about-social span {
+    margin: 0 0.25rem;
+    color: var(--color-muted);
+}

@@ -22,7 +22,7 @@ from PIL import Image, ImageOps
 ROOT = Path(__file__).resolve().parent.parent
 CAROUSEL = ROOT / "Photo_carousel"
 BACKUP = ROOT / "Photo_carousel_originals"
-SKIP_DIRS = {"_web"}
+SKIP_DIRS = {"_web", "_removed"}
 EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp"}
 
 MAX_EDGE = 2000      # px, longest side — sharp in the full-screen viewer, light to load
