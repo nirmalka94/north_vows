@@ -27,6 +27,11 @@
     <meta property="twitter:description" content="Discover minimal, elegant wedding and landscape fine art photography. Explore custom galleries, editorial stories, and professional portraits by North Vows.">
     <meta property="twitter:image" content="Assets/logo.png">
 
+    <!-- Fonts (loaded in parallel with the stylesheet) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@200;300;400;500;600&display=swap">
+
     <!-- Stylesheet -->
     <link rel="stylesheet" href="style.css">
 
@@ -96,7 +101,11 @@
          ========================================================================== -->
     <section id="home" class="hero">
         <div class="hero-bg">
-            <img alt="" class="hero-bg-img" id="heroBgImg">
+            <img alt="" class="hero-bg-img" id="heroBgImg" fetchpriority="high" decoding="async">
+            <script>
+                // Show the last-known hero image straight away instead of waiting for the API
+                try { var h = localStorage.getItem('nv_hero'); if (h) document.getElementById('heroBgImg').src = h; } catch (e) {}
+            </script>
         </div>
         <div class="container">
             <div class="hero-content">
@@ -152,10 +161,10 @@
             </div>
 
             <!-- Categories / Album Filters -->
-            <ul class="gallery-filters" id="galleryFilters">
-                <li class="filter-btn active" data-filter="all">All Work</li>
+            <div class="gallery-filters" id="galleryFilters" role="group" aria-label="Filter portfolio by album">
+                <button type="button" class="filter-btn active" data-filter="all" aria-pressed="true">All Work</button>
                 <!-- Dynamic categories loaded by JS -->
-            </ul>
+            </div>
 
             <!-- Gallery Grid -->
             <div class="gallery-grid" id="galleryGrid">
@@ -364,7 +373,7 @@
                             </div>
                             <div class="contact-detail-text">
                                 <span class="detail-label">Email Us</span>
-                                <span class="detail-value">studio@northvows.com</span>
+                                <a class="detail-value" id="contactEmailDisplay" href="mailto:thenorthvows@gmail.com">thenorthvows@gmail.com</a>
                             </div>
                         </div>
                         
@@ -378,7 +387,7 @@
                             </div>
                             <div class="contact-detail-text">
                                 <span class="detail-label">Follow Us</span>
-                                <span class="detail-value" id="contactInstaHandleDisplay">@northvows_photo</span>
+                                <a class="detail-value" id="contactInstaHandleDisplay" href="https://instagram.com/northvows_photo" target="_blank" rel="noopener noreferrer">@northvows_photo</a>
                             </div>
                         </div>
                         
@@ -390,7 +399,7 @@
                             </div>
                             <div class="contact-detail-text">
                                 <span class="detail-label">Call or WhatsApp</span>
-                                <span class="detail-value" id="contactPhoneDisplay">+1 (226) 989-4884</span>
+                                <a class="detail-value" id="contactPhoneDisplay" href="tel:+12269894884">+1 (226) 989-4884</a>
                             </div>
                         </div>
                         
@@ -417,11 +426,18 @@
                             <label for="contactName" class="form-label">Full Name</label>
                             <input type="text" id="contactName" name="name" class="form-control" placeholder="e.g. Eleanor Vance" required autocomplete="name">
                         </div>
-                        <div class="form-group">
-                            <label for="contactEmail" class="form-label">Email Address</label>
-                            <input type="email" id="contactEmail" name="email" class="form-control" placeholder="e.g. eleanor@example.com" autocomplete="email">
+                        <div class="form-row-2">
+                            <div class="form-group">
+                                <label for="contactEmail" class="form-label">Email Address</label>
+                                <input type="email" id="contactEmail" name="email" class="form-control" placeholder="e.g. eleanor@example.com" autocomplete="email" aria-describedby="contactReachHint">
+                            </div>
+                            <div class="form-group">
+                                <label for="contactPhone" class="form-label">Phone Number</label>
+                                <input type="tel" id="contactPhone" name="phone" class="form-control" placeholder="e.g. 226 555 0123" autocomplete="tel" aria-describedby="contactReachHint">
+                            </div>
                         </div>
-                        <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+                        <p class="form-hint" id="contactReachHint">Please give us an email address or a phone number so we can reply.</p>
+                        <div class="form-row-2">
                             <div class="form-group">
                                 <label for="contactEventType" class="form-label">Event Type <span style="color:var(--color-muted); font-size:0.65rem;">(optional)</span></label>
                                 <select id="contactEventType" name="eventType" class="form-control">
@@ -457,13 +473,24 @@
                             <label for="contactMessage" class="form-label">Tell Us About Your Project</label>
                             <textarea id="contactMessage" name="message" class="form-control" placeholder="Location, ideas, or anything else you'd like us to know…"></textarea>
                         </div>
-                        <button type="submit" class="submit-btn whatsapp-submit-btn" id="submitBtn">
-                            <svg viewBox="0 0 24 24" fill="currentColor" style="width:18px;height:18px;flex-shrink:0;">
-                                <path d="M12.012 2c-5.506 0-9.988 4.482-9.988 9.988 0 1.76.459 3.473 1.332 4.985L2 22l5.176-1.358a9.89 9.89 0 0 0 4.836 1.258c5.506 0 9.988-4.482 9.988-9.988C22.001 6.482 17.519 2 12.012 2zm0 1.838c4.5 0 8.153 3.653 8.153 8.15c0 4.5-3.653 8.15-8.153 8.15a8.109 8.109 0 0 1-4.148-1.127l-.297-.177-3.076.807.82-3.003-.194-.309a8.103 8.103 0 0 1-1.305-4.348c0-4.5 3.653-8.15 8.153-8.15zm-1.897 2.923c-.172 0-.363.045-.526.12-.164.076-.298.182-.399.324-.469.608-.707 1.341-.707 2.193 0 .769.199 1.517.59 2.222a7.6 7.6 0 0 0 2.221 2.592c.677.518 1.436.883 2.25 1.082.385.093.774.137 1.157.137.608 0 1.157-.14 1.62-.416.48-.286.726-.745.726-1.353 0-.155-.078-.291-.233-.369l-1.926-.963c-.156-.078-.337-.038-.456.104l-.565.688c-.14.168-.344.202-.533.102a5.4 5.4 0 0 1-1.748-1.547 5.25 5.25 0 0 1-.951-1.688c-.066-.192-.016-.381.127-.524l.412-.412c.078-.078.118-.182.118-.286V7.472c0-.129-.065-.245-.195-.31l-1.63-.815a.398.398 0 0 0-.179-.044z"/>
-                            </svg>
-                            Send via WhatsApp
-                        </button>
-                        <p style="font-size:0.72rem; color:var(--color-muted); text-align:center; margin-top:0.75rem; line-height:1.5;">Opens WhatsApp with your enquiry pre-filled — no app needed on desktop.</p>
+                        <!-- Honeypot: hidden from people, filled in by spam bots -->
+                        <input type="text" name="website" id="contactWebsite" class="hp-field" tabindex="-1" autocomplete="off" aria-hidden="true">
+                        <div class="submit-row">
+                            <button type="submit" class="submit-btn" id="submitEmailBtn" value="email">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;flex-shrink:0;">
+                                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                                    <polyline points="22,6 12,13 2,6"></polyline>
+                                </svg>
+                                Send by Email
+                            </button>
+                            <button type="submit" class="submit-btn whatsapp-submit-btn" id="submitBtn" value="whatsapp">
+                                <svg viewBox="0 0 24 24" fill="currentColor" style="width:18px;height:18px;flex-shrink:0;">
+                                    <path d="M12.012 2c-5.506 0-9.988 4.482-9.988 9.988 0 1.76.459 3.473 1.332 4.985L2 22l5.176-1.358a9.89 9.89 0 0 0 4.836 1.258c5.506 0 9.988-4.482 9.988-9.988C22.001 6.482 17.519 2 12.012 2zm0 1.838c4.5 0 8.153 3.653 8.153 8.15c0 4.5-3.653 8.15-8.153 8.15a8.109 8.109 0 0 1-4.148-1.127l-.297-.177-3.076.807.82-3.003-.194-.309a8.103 8.103 0 0 1-1.305-4.348c0-4.5 3.653-8.15 8.153-8.15zm-1.897 2.923c-.172 0-.363.045-.526.12-.164.076-.298.182-.399.324-.469.608-.707 1.341-.707 2.193 0 .769.199 1.517.59 2.222a7.6 7.6 0 0 0 2.221 2.592c.677.518 1.436.883 2.25 1.082.385.093.774.137 1.157.137.608 0 1.157-.14 1.62-.416.48-.286.726-.745.726-1.353 0-.155-.078-.291-.233-.369l-1.926-.963c-.156-.078-.337-.038-.456.104l-.565.688c-.14.168-.344.202-.533.102a5.4 5.4 0 0 1-1.748-1.547 5.25 5.25 0 0 1-.951-1.688c-.066-.192-.016-.381.127-.524l.412-.412c.078-.078.118-.182.118-.286V7.472c0-.129-.065-.245-.195-.31l-1.63-.815a.398.398 0 0 0-.179-.044z"/>
+                                </svg>
+                                Send via WhatsApp
+                            </button>
+                        </div>
+                        <p class="form-status" id="formStatus" role="status" aria-live="polite"></p>
                     </form>
                 </div>
             </div>
@@ -982,6 +1009,10 @@
                                     <div class="admin-flex-col">
                                         <label class="form-label" for="settingStudioPhone">Studio Phone / Contact Number</label>
                                         <input type="text" id="settingStudioPhone" class="admin-input" placeholder="e.g. +1 (226) 989-4884" required>
+                                    </div>
+                                    <div class="admin-flex-col">
+                                        <label class="form-label" for="settingStudioEmail">Studio Email (receives website enquiries)</label>
+                                        <input type="email" id="settingStudioEmail" class="admin-input" placeholder="e.g. hello@northvowsphotography.com" required>
                                     </div>
                                     <div class="admin-flex-col">
                                         <label class="form-label" for="settingStudioAddress">Studio Address</label>

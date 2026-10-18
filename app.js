@@ -76,10 +76,19 @@ class APIManager {
     getSettings()                  { return this._get('get_settings'); }
 
     // Upload a standalone image (hero bg, etc.) — returns { url }
-    uploadImage(file) {
+    async uploadImage(file) {
         const fd = new FormData();
-        fd.append('file', file);
+        fd.append('file', await compressImage(file));
         return this._postForm('upload_image', fd);
+    }
+
+    // Public contact form → emailed to the studio
+    sendEnquiry(enquiry) {
+        return fetch(`${API_BASE}?action=send_enquiry`, {
+            method:  'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body:    JSON.stringify(enquiry),
+        }).then(r => r.json());
     }
 }
 
@@ -254,6 +263,7 @@ const DEFAULT_SETTINGS = {
     photographerRole: 'Founder & Lead Photographer',
     photographerBio: 'With 5 years of experience as a destination wedding photographer at Magicmotionmedia and Vows of Love, Abin brings a heartfelt, cinematic eye to every session. His work captures the quiet moments — a stolen glance, a tender touch — that tell the real story of your day.',
     studioPhone: '+1 (226) 989-4884',
+    studioEmail: 'thenorthvows@gmail.com',
     studioAddress: 'Kitchener, ON N2E 2K2',
     heroImage: '',
     googleReviewsUrl: '',
@@ -503,8 +513,12 @@ async function hydrateSiteUI() {
     // Update Hero background: use explicitly set heroImage setting first, then fall back to first portfolio photo
     const heroBgImg = document.getElementById('heroBgImg');
     if (heroBgImg) {
-        heroBgImg.src = state.settings.heroImage
+        const heroSrc = state.settings.heroImage
             || (state.photos.length > 0 ? state.photos[0].url : 'Assets/Photographer_Main.jpeg');
+        if (heroBgImg.getAttribute('src') !== heroSrc) heroBgImg.src = heroSrc;
+        if (!DEMO_MODE) {
+            try { localStorage.setItem('nv_hero', heroSrc); } catch (e) { /* storage unavailable */ }
+        }
     }
 
     // 4. About Bio Elements
@@ -529,7 +543,17 @@ async function hydrateSiteUI() {
 
     // 7. Contact Info Details
     const contactPhoneEl = document.getElementById('contactPhoneDisplay');
-    if (contactPhoneEl) contactPhoneEl.textContent = state.settings.studioPhone || DEFAULT_SETTINGS.studioPhone;
+    if (contactPhoneEl) {
+        const phone = state.settings.studioPhone || DEFAULT_SETTINGS.studioPhone;
+        contactPhoneEl.textContent = phone;
+        contactPhoneEl.href = `tel:${phone.replace(/[^\d+]/g, '')}`;
+    }
+    const contactEmailEl = document.getElementById('contactEmailDisplay');
+    if (contactEmailEl) {
+        const studioEmail = state.settings.studioEmail || DEFAULT_SETTINGS.studioEmail;
+        contactEmailEl.textContent = studioEmail;
+        contactEmailEl.href = `mailto:${studioEmail}`;
+    }
     const contactAddressEl = document.getElementById('contactAddressDisplay');
     if (contactAddressEl) {
         const address = state.settings.studioAddress || DEFAULT_SETTINGS.studioAddress;
@@ -537,7 +561,11 @@ async function hydrateSiteUI() {
         contactAddressEl.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
     }
     const contactInstaEl = document.getElementById('contactInstaHandleDisplay');
-    if (contactInstaEl) contactInstaEl.textContent = state.settings.instaHandle || DEFAULT_SETTINGS.instaHandle;
+    if (contactInstaEl) {
+        const handle = state.settings.instaHandle || DEFAULT_SETTINGS.instaHandle;
+        contactInstaEl.textContent = handle;
+        contactInstaEl.href = `https://instagram.com/${encodeURIComponent(handle.replace('@', ''))}`;
+    }
 
     // 8. Instagram Profile
     const instaHandle = state.settings.instaHandle || DEFAULT_SETTINGS.instaHandle;
@@ -572,22 +600,27 @@ function renderPortfolioNav() {
     const activeSlug = state.currentFilter;
     
     // Clear dynamic categories (keep "All Work" at start)
-    filtersContainer.innerHTML = `<li class="filter-btn ${activeSlug === 'all' ? 'active' : ''}" data-filter="all">All Work</li>`;
-    
-    state.albums.forEach(album => {
-        const li = document.createElement('li');
-        li.className = `filter-btn ${activeSlug === album.slug ? 'active' : ''}`;
-        li.dataset.filter = album.slug;
-        li.textContent = album.name;
-        filtersContainer.appendChild(li);
+    filtersContainer.innerHTML = '';
+    [{ slug: 'all', name: 'All Work' }, ...state.albums].forEach(album => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `filter-btn ${activeSlug === album.slug ? 'active' : ''}`;
+        btn.dataset.filter = album.slug;
+        btn.setAttribute('aria-pressed', String(activeSlug === album.slug));
+        btn.textContent = album.name;
+        filtersContainer.appendChild(btn);
     });
 
     // Rebind filter buttons click listeners
     const buttons = filtersContainer.querySelectorAll('.filter-btn');
     buttons.forEach(btn => {
         btn.addEventListener('click', () => {
-            buttons.forEach(b => b.classList.remove('active'));
+            buttons.forEach(b => {
+                b.classList.remove('active');
+                b.setAttribute('aria-pressed', 'false');
+            });
             btn.classList.add('active');
+            btn.setAttribute('aria-pressed', 'true');
             state.currentFilter = btn.dataset.filter;
             renderPortfolioGrid();
         });
@@ -748,33 +781,97 @@ function renderInstagramFeedGrid() {
 // Contact Form Submission Action
 // ==========================================================================
 const contactForm = document.getElementById('contactForm');
-const submitBtn = document.getElementById('submitBtn');
+const formStatus = document.getElementById('formStatus');
+
+function setFormStatus(message, type) {
+    if (!formStatus) return;
+    formStatus.textContent = message;
+    formStatus.className = `form-status ${type || ''}`;
+    formStatus.style.display = message ? 'block' : 'none';
+}
+
+// Event dates can't be in the past
+const contactDateInput = document.getElementById('contactDate');
+if (contactDateInput) {
+    const today = new Date();
+    today.setMinutes(today.getMinutes() - today.getTimezoneOffset());
+    contactDateInput.min = today.toISOString().slice(0, 10);
+}
+
+function readEnquiry() {
+    const val = id => document.getElementById(id).value.trim();
+    return {
+        name:        val('contactName'),
+        email:       val('contactEmail'),
+        phone:       val('contactPhone'),
+        eventType:   val('contactEventType'),
+        requirement: val('contactRequirement'),
+        date:        val('contactDate'),
+        message:     val('contactMessage'),
+        website:     val('contactWebsite') // honeypot
+    };
+}
+
+function enquiryLines(enquiry) {
+    const lines = ['Hello North Vows! I would like to enquire about your photography services.', ''];
+    if (enquiry.name)        lines.push(`Name: ${enquiry.name}`);
+    if (enquiry.email)       lines.push(`Email: ${enquiry.email}`);
+    if (enquiry.phone)       lines.push(`Phone: ${enquiry.phone}`);
+    if (enquiry.eventType)   lines.push(`Event Type: ${enquiry.eventType}`);
+    if (enquiry.requirement) lines.push(`Requirement: ${enquiry.requirement}`);
+    if (enquiry.date)        lines.push(`Date of Event: ${enquiry.date}`);
+    if (enquiry.message)     lines.push('', enquiry.message);
+    return lines;
+}
 
 if (contactForm) {
-    contactForm.addEventListener('submit', (event) => {
+    const emailInput = document.getElementById('contactEmail');
+    const phoneInput = document.getElementById('contactPhone');
+    [emailInput, phoneInput].forEach(el => el.addEventListener('input', () => emailInput.setCustomValidity('')));
+
+    contactForm.addEventListener('submit', async (event) => {
         event.preventDefault();
+        const via = event.submitter?.value || 'email';
+        const enquiry = readEnquiry();
 
-        const name       = document.getElementById('contactName').value.trim();
-        const email      = document.getElementById('contactEmail').value.trim();
-        const eventType  = document.getElementById('contactEventType').value;
-        const requirement= document.getElementById('contactRequirement').value;
-        const date       = document.getElementById('contactDate').value;
-        const message    = document.getElementById('contactMessage').value.trim();
+        // Need at least one way to reply
+        if (!enquiry.email && !enquiry.phone) {
+            emailInput.setCustomValidity('Please enter an email address or a phone number.');
+            emailInput.reportValidity();
+            return;
+        }
+        if (enquiry.date && contactDateInput.min && enquiry.date < contactDateInput.min) {
+            contactDateInput.setCustomValidity('Please choose a date from today onwards.');
+            contactDateInput.reportValidity();
+            contactDateInput.setCustomValidity('');
+            return;
+        }
 
-        // Build a human-readable WhatsApp message
-        let lines = ['Hello North Vows! I would like to enquire about your photography services.', ''];
-        if (name)        lines.push(`Name: ${name}`);
-        if (email)       lines.push(`Email: ${email}`);
-        if (eventType)   lines.push(`Event Type: ${eventType}`);
-        if (requirement) lines.push(`Requirement: ${requirement}`);
-        if (date)        lines.push(`Date of Event: ${date}`);
-        if (message)     lines.push('', message);
+        if (via === 'whatsapp') {
+            const number = (state.settings.whatsappNumber || DEFAULT_SETTINGS.whatsappNumber).replace(/[^\d+]/g, '');
+            window.open(`https://wa.me/${number}?text=${encodeURIComponent(enquiryLines(enquiry).join('\n'))}`, '_blank', 'noopener,noreferrer');
+            contactForm.reset();
+            setFormStatus('WhatsApp opened with your enquiry. Press send there to reach us.', 'success');
+            return;
+        }
 
-        const number = (state.settings.whatsappNumber || DEFAULT_SETTINGS.whatsappNumber).replace(/[^\d+]/g, '');
-        const url = `https://wa.me/${number}?text=${encodeURIComponent(lines.join('\n'))}`;
-
-        window.open(url, '_blank', 'noopener,noreferrer');
-        contactForm.reset();
+        // Email: send through the server; fall back to the visitor's email app
+        const buttons = contactForm.querySelectorAll('button[type="submit"]');
+        buttons.forEach(b => { b.disabled = true; });
+        setFormStatus('Sending…', '');
+        try {
+            const res = await db.sendEnquiry(enquiry);
+            if (!res || !res.success) throw new Error(res?.error || 'Send failed');
+            contactForm.reset();
+            setFormStatus(`Thank you${enquiry.name ? ', ' + enquiry.name.split(' ')[0] : ''}! Your enquiry has been sent. We will get back to you soon.`, 'success');
+        } catch (err) {
+            const studioEmail = state.settings.studioEmail || DEFAULT_SETTINGS.studioEmail;
+            const subject = `Photography enquiry${enquiry.eventType ? ' – ' + enquiry.eventType : ''}${enquiry.name ? ' from ' + enquiry.name : ''}`;
+            window.location.href = `mailto:${studioEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(enquiryLines(enquiry).join('\n'))}`;
+            setFormStatus(`We opened your email app with the enquiry filled in. If nothing opened, email us at ${studioEmail}.`, 'success');
+        } finally {
+            buttons.forEach(b => { b.disabled = false; });
+        }
     });
 }
 
@@ -1132,13 +1229,13 @@ if (uploadZone) {
     });
 }
 
-function handleUploadedPhotoFile(file) {
+async function handleUploadedPhotoFile(file) {
     if (!file.type.startsWith('image/')) {
         showToast('Please select a valid image file.', true);
         return;
     }
 
-    loadedFile = file; // keep the real File object — sent as multipart on submit
+    loadedFile = await compressImage(file); // resized for the web — sent as multipart on submit
 
     // FileReader is only for the preview thumbnail, not for submission
     const reader = new FileReader();
@@ -1413,6 +1510,7 @@ function populateAdminSettingsForm() {
 
     document.getElementById('settingStudioPhone').value = state.settings.studioPhone || DEFAULT_SETTINGS.studioPhone;
     document.getElementById('settingStudioAddress').value = state.settings.studioAddress || DEFAULT_SETTINGS.studioAddress;
+    document.getElementById('settingStudioEmail').value = state.settings.studioEmail || DEFAULT_SETTINGS.studioEmail;
 
     document.getElementById('settingWhatsappNumber').value = state.settings.whatsappNumber || DEFAULT_SETTINGS.whatsappNumber;
     document.getElementById('settingWhatsappMessage').value = state.settings.whatsappMessage || DEFAULT_SETTINGS.whatsappMessage;
@@ -1440,7 +1538,7 @@ if (siteSettingsForm) {
             'heroSubtitle', 'heroTitle', 'heroDesc',
             'aboutTitle', 'aboutSubtitle', 'aboutDesc1', 'aboutDesc2',
             'photographerName', 'photographerRole', 'photographerBio',
-            'studioPhone', 'studioAddress',
+            'studioPhone', 'studioAddress', 'studioEmail',
             'whatsappNumber', 'whatsappMessage',
             'heroImage'
         ];
@@ -2297,4 +2395,38 @@ if (googleReviewsForm) {
             showToast('Updated on this page only. Could not save to the database.', true);
         }
     });
+}
+
+// ==========================================================================
+// Image compression for uploads
+// Camera files are often 5–15 MB. Resize to a web-friendly size in the
+// browser before uploading so the site stays fast.
+// ==========================================================================
+const UPLOAD_MAX_DIMENSION = 2400;
+const UPLOAD_JPEG_QUALITY = 0.85;
+
+async function compressImage(file) {
+    if (!/^image\/(jpeg|png|webp)$/.test(file.type)) return file;
+    try {
+        const bitmap = await createImageBitmap(file);
+        const scale = Math.min(1, UPLOAD_MAX_DIMENSION / Math.max(bitmap.width, bitmap.height));
+        // Small enough already: keep the original (and PNG transparency)
+        if (scale === 1 && file.size < 1.5 * 1024 * 1024) return file;
+
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.round(bitmap.width * scale);
+        canvas.height = Math.round(bitmap.height * scale);
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#ffffff'; // JPEG has no transparency
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', UPLOAD_JPEG_QUALITY));
+        if (!blob || blob.size >= file.size) return file;
+        const name = file.name.replace(/\.[^.]+$/, '') + '.jpg';
+        return new File([blob], name, { type: 'image/jpeg' });
+    } catch (err) {
+        console.warn('Image compression skipped:', err);
+        return file;
+    }
 }

@@ -54,3 +54,7 @@ UPDATE `nv_settings` SET `setting_value` = 'Wedding, engagement and portrait pho
 UPDATE `nv_settings` SET `setting_value` = 'Assets/logo.png' WHERE `setting_key` = 'instaAvatar' AND `setting_value` LIKE '%unsplash.com%';
 -- Remove made-up sample Instagram posts if any were saved to the database.
 DELETE FROM `nv_instagram` WHERE `id` IN ('insta-1','insta-2','insta-3','insta-4','insta-5','insta-6');
+
+-- Studio email (Oct 2026): receives website enquiries from the contact form.
+INSERT INTO `nv_settings` (`setting_key`, `setting_value`) VALUES ('studioEmail', 'thenorthvows@gmail.com')
+ON DUPLICATE KEY UPDATE `setting_value` = VALUES(`setting_value`);
