@@ -40,7 +40,7 @@
 
     <!-- Stylesheet. Bump ?v= on every deploy so browsers fetch the new file
          (Hostinger tells browsers to cache CSS/JS for 7 days). -->
-    <link rel="stylesheet" href="style.css?v=20261019j">
+    <link rel="stylesheet" href="style.css?v=20261019l">
     <link rel="icon" type="image/png" href="Assets/logo.png">
 
     <!-- Google Business Schema Markup (JSON-LD) -->
@@ -507,7 +507,8 @@
                 <!-- Dynamic reviews loaded by JS -->
             </div>
             <div class="reviews-footer" id="reviewsFooter" hidden>
-                <a href="#" id="googleReviewsLink" class="reviews-google-link" target="_blank" rel="noopener noreferrer">Read all our reviews on Google &rarr;</a>
+                <a href="#" class="reviews-google-link" data-review="write" data-track="review_write_reviews" target="_blank" rel="noopener noreferrer" hidden>Leave a review on Google &rarr;</a>
+                <a href="#" class="reviews-google-link" data-review="read" data-track="review_read_reviews" target="_blank" rel="noopener noreferrer" hidden>Read all our reviews on Google &rarr;</a>
             </div>
         </div>
     </section>
@@ -553,6 +554,22 @@
                     <div class="faq-answer"><p>Yes. Every gallery comes with high-resolution downloads and a personal print release, so you can print anywhere you like.</p></div>
                     </details>
                 </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==========================================================================
+         Google review strip (shown when a review link is set in admin)
+         ========================================================================== -->
+    <section class="review-strip gold-band" id="reviewStrip" aria-label="Google reviews" hidden>
+        <div class="container review-strip-inner">
+            <div class="review-strip-text">
+                <span class="review-strip-stars" aria-hidden="true">★★★★★</span>
+                <p><strong>Loved your photos?</strong> A quick Google review helps other couples and families find us.</p>
+            </div>
+            <div class="review-strip-actions">
+                <a href="#" class="review-strip-btn" data-review="write" data-track="review_write_strip" target="_blank" rel="noopener noreferrer" hidden><svg class="google-g" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg><span>Leave a Google review</span></a>
+                <a href="#" class="review-strip-link" data-review="read" data-track="review_read_strip" target="_blank" rel="noopener noreferrer" hidden>Read our reviews &rarr;</a>
             </div>
         </div>
     </section>
@@ -738,6 +755,7 @@
                     <li><a data-contact="phone" href="tel:+12269894884">+1 (226) 989-4884</a></li>
                     <li><a data-contact="instagram" href="https://instagram.com/thenorthvows" target="_blank" rel="noopener noreferrer">@thenorthvows</a></li>
                     <li><a href="https://www.facebook.com/Northvowsphotography" target="_blank" rel="noopener noreferrer">Facebook</a></li>
+                    <li hidden><a href="#" class="footer-review" data-review="write" data-track="review_write_footer" target="_blank" rel="noopener noreferrer"><span aria-hidden="true">★</span> Leave a Google review</a></li>
                     <li><span>Kitchener, ON · Canada</span></li>
                 </ul>
             </div>
@@ -1165,14 +1183,19 @@
                             <span>Pricing, Reviews, Stories &amp; FAQ</span>
                         </div>
                         <div class="admin-card">
-                            <h3 style="margin-bottom:1.25rem; font-size:1.1rem; text-transform:uppercase; letter-spacing:0.05em;">Google Reviews Link</h3>
+                            <h3 style="margin-bottom:1.25rem; font-size:1.1rem; text-transform:uppercase; letter-spacing:0.05em;">Google Reviews Links</h3>
+                            <p style="font-size:0.8rem; color:var(--color-muted); margin:-0.5rem 0 1rem; line-height:1.5;">Shown in the "Review us on Google" strip above Contact, in the footer and under client reviews. Leave a field empty to hide its button.</p>
                             <form id="googleReviewsForm" class="admin-flex-row" style="align-items:flex-end;">
                                 <div class="admin-flex-col">
-                                    <label class="form-label" for="settingGoogleReviewsUrl">Link to your Google Business reviews (optional)</label>
-                                    <input type="url" id="settingGoogleReviewsUrl" class="admin-input" placeholder="https://g.page/r/...">
+                                    <label class="form-label" for="settingGoogleReviewsUrl">"Leave a review" link (from Google Business Profile → Ask for reviews)</label>
+                                    <input type="url" id="settingGoogleReviewsUrl" class="admin-input" placeholder="https://g.page/r/.../review">
+                                </div>
+                                <div class="admin-flex-col">
+                                    <label class="form-label" for="settingGoogleReadReviewsUrl">"Read our reviews" link (your Google Maps listing)</label>
+                                    <input type="url" id="settingGoogleReadReviewsUrl" class="admin-input" placeholder="https://maps.app.goo.gl/...">
                                 </div>
                                 <div class="admin-flex-col" style="flex:0; min-width:auto;">
-                                    <button type="submit" class="admin-btn">Save Link</button>
+                                    <button type="submit" class="admin-btn">Save Links</button>
                                 </div>
                             </form>
                         </div>
@@ -1236,6 +1259,13 @@
                                             <input type="text" id="settingHeroImage" class="admin-input" placeholder="https://… — leave blank to auto-use first portfolio photo">
                                             <img id="heroImgPreview" src="" alt="Hero preview" style="display:none; max-height:90px; width:100%; object-fit:cover; border-radius:4px; margin-top:0.6rem;">
                                         </div>
+                                    </div>
+                                </div>
+
+                                <div class="admin-flex-row">
+                                    <div class="admin-flex-col" style="max-width:320px;">
+                                        <label class="form-label" for="settingHeroSlideSeconds">Hero slider: seconds per photo</label>
+                                        <input type="number" id="settingHeroSlideSeconds" class="admin-input" min="1.5" max="15" step="0.5" placeholder="2">
                                     </div>
                                 </div>
 
@@ -1410,6 +1440,6 @@
 
     <!-- Scripts -->
     <!-- Bump ?v= on every deploy (see stylesheet note) -->
-    <script src="app.js?v=20261019j"></script>
+    <script src="app.js?v=20261019l"></script>
 </body>
 </html>

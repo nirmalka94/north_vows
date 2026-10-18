@@ -5039,3 +5039,143 @@ a.detail-value-secondary {
         transform: none;
     }
 }
+
+/* Hero slider speed: shorter crossfades so a 2-second photo is clearly seen;
+   the dot's progress fill matches the configured duration */
+.hero-frame-slide {
+    transition: opacity 0.7s ease;
+}
+
+.hero-slide {
+    transition: opacity 0.9s ease;
+}
+
+.hero-dot.is-active::after {
+    animation-duration: var(--hero-slide-duration, 2s);
+}
+
+/* ==========================================================================
+   "Review us on Google" strip (above Contact) + footer link
+   ========================================================================== */
+.review-strip {
+    padding: 1.75rem 0;
+}
+
+.review-strip-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.25rem 2rem;
+    flex-wrap: wrap;
+}
+
+.review-strip-text {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.review-strip-stars {
+    color: var(--color-accent);
+    font-size: 1.05rem;
+    letter-spacing: 0.15em;
+    white-space: nowrap;
+}
+
+.review-strip-text p {
+    font-size: 0.95rem;
+    font-weight: 300;
+    line-height: 1.6;
+    color: var(--color-secondary);
+}
+
+.review-strip-text strong {
+    font-weight: 500;
+    color: var(--color-primary);
+}
+
+.review-strip-actions {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    flex-shrink: 0;
+}
+
+.review-strip-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.7rem 1.3rem;
+    border-radius: var(--radius-full);
+    background-color: #ffffff;
+    color: #1f1f1f;
+    font-size: 0.85rem;
+    font-weight: 500;
+    box-shadow: var(--shadow-sm);
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.review-strip-btn:hover,
+.review-strip-btn:focus-visible {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+}
+
+.google-g {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+}
+
+.review-strip-link {
+    display: inline-block;
+    padding: 0.5rem 0;
+    color: var(--color-accent);
+    font-size: 0.85rem;
+}
+
+.review-strip-link:hover {
+    text-decoration: underline;
+}
+
+.reviews-footer {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.75rem 2rem;
+}
+
+.footer-review span {
+    color: var(--color-accent);
+}
+
+@media (max-width: 576px) {
+    .review-strip-text {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 0.4rem;
+    }
+    .review-strip-actions {
+        width: 100%;
+        flex-wrap: wrap;
+    }
+    .review-strip-btn {
+        flex: 1;
+        justify-content: center;
+    }
+}
+
+.review-strip-btn span {
+    white-space: nowrap;
+}
+
+@media (max-width: 576px) {
+    .review-strip-actions {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.5rem;
+    }
+    .review-strip-link {
+        text-align: center;
+    }
+}

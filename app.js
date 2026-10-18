@@ -261,7 +261,9 @@ const DEFAULT_SETTINGS = {
     studioEmail: 'thenorthvows@gmail.com',
     studioAddress: 'Kitchener, ON N2E 2K2',
     heroImage: '',
+    heroSlideSeconds: '2',
     googleReviewsUrl: '',
+    googleReadReviewsUrl: '',
     gaMeasurementId: '',
     // Lists below are stored as JSON strings in nv_settings and edited in
     // Admin → "Pricing, Reviews & FAQ".
@@ -1529,6 +1531,7 @@ function populateAdminSettingsForm() {
     document.getElementById('settingStudioAddress').value = state.settings.studioAddress || DEFAULT_SETTINGS.studioAddress;
     document.getElementById('settingStudioEmail').value = state.settings.studioEmail || DEFAULT_SETTINGS.studioEmail;
     document.getElementById('settingGaMeasurementId').value = state.settings.gaMeasurementId || '';
+    document.getElementById('settingHeroSlideSeconds').value = state.settings.heroSlideSeconds || DEFAULT_SETTINGS.heroSlideSeconds;
 
     document.getElementById('settingWhatsappNumber').value = state.settings.whatsappNumber || DEFAULT_SETTINGS.whatsappNumber;
     document.getElementById('settingWhatsappMessage').value = state.settings.whatsappMessage || DEFAULT_SETTINGS.whatsappMessage;
@@ -1558,7 +1561,7 @@ if (siteSettingsForm) {
             'photographerName', 'photographerRole', 'photographerBio',
             'studioPhone', 'studioAddress', 'studioEmail',
             'whatsappNumber', 'whatsappMessage', 'gaMeasurementId',
-            'heroImage'
+            'heroImage', 'heroSlideSeconds'
         ];
 
         for (const field of fields) {
@@ -1568,6 +1571,7 @@ if (siteSettingsForm) {
         }
 
         hydrateSiteUI();
+        restartHeroTimer(); // apply a new slider speed straight away
         showToast('Site settings and SEO titles updated.');
     });
 }
@@ -2115,12 +2119,27 @@ function renderTestimonials() {
             </figure>`;
     }).join('');
 
+    renderReviewLinks();
+}
+
+// Google review links: "write" = leave a review, "read" = Google Maps listing.
+// Buttons without a link stay hidden; the strip hides when neither is set.
+function renderReviewLinks() {
+    const links = {
+        write: (state.settings.googleReviewsUrl || '').trim(),
+        read: (state.settings.googleReadReviewsUrl || '').trim()
+    };
+    document.querySelectorAll('[data-review]').forEach(a => {
+        const url = links[a.dataset.review];
+        if (url) a.href = url;
+        a.hidden = !url;
+        if (a.parentElement.tagName === 'LI') a.parentElement.hidden = !url;
+    });
+    const any = Boolean(links.write || links.read);
+    const strip = document.getElementById('reviewStrip');
+    if (strip) strip.hidden = !any;
     const footer = document.getElementById('reviewsFooter');
-    const link = document.getElementById('googleReviewsLink');
-    if (footer && link) {
-        footer.hidden = !state.settings.googleReviewsUrl;
-        if (state.settings.googleReviewsUrl) link.href = state.settings.googleReviewsUrl;
-    }
+    if (footer) footer.hidden = !any;
 }
 
 function renderFaqs() {
@@ -2239,6 +2258,8 @@ function renderContentEditors() {
 
     const googleInput = document.getElementById('settingGoogleReviewsUrl');
     if (googleInput) googleInput.value = state.settings.googleReviewsUrl || '';
+    const googleReadInput = document.getElementById('settingGoogleReadReviewsUrl');
+    if (googleReadInput) googleReadInput.value = state.settings.googleReadReviewsUrl || '';
 }
 
 function buildContentFieldHtml(config, field) {
@@ -2418,13 +2439,18 @@ const googleReviewsForm = document.getElementById('googleReviewsForm');
 if (googleReviewsForm) {
     googleReviewsForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const url = document.getElementById('settingGoogleReviewsUrl').value.trim();
-        state.settings.googleReviewsUrl = url;
+        const writeUrl = document.getElementById('settingGoogleReviewsUrl').value.trim();
+        const readUrl = document.getElementById('settingGoogleReadReviewsUrl').value.trim();
+        state.settings.googleReviewsUrl = writeUrl;
+        state.settings.googleReadReviewsUrl = readUrl;
         hydrateSiteUI();
         try {
-            const res = await db.saveSetting('googleReviewsUrl', url);
-            if (res && res.error) throw new Error(res.error);
-            showToast('Google reviews link saved.');
+            // A single space clears a link (empty values are ignored when settings load)
+            for (const [key, value] of [['googleReviewsUrl', writeUrl], ['googleReadReviewsUrl', readUrl]]) {
+                const res = await db.saveSetting(key, value || ' ');
+                if (res && res.error) throw new Error(res.error);
+            }
+            showToast('Google review links saved.');
         } catch {
             showToast('Updated on this page only. Could not save to the database.', true);
         }
@@ -2552,7 +2578,11 @@ if (faqToggle) {
 // ==========================================================================
 const CAROUSEL_API = 'api/carousel.php';
 const HERO_SLIDE_LIMIT = 8;
-const HERO_SLIDE_SECONDS = 6;
+// Seconds each hero photo shows; set in Admin → SEO & Settings (1.5–15 s)
+function heroSlideSeconds() {
+    const v = parseFloat(state.settings.heroSlideSeconds || DEFAULT_SETTINGS.heroSlideSeconds);
+    return Number.isFinite(v) ? Math.min(15, Math.max(1.5, v)) : 2;
+}
 
 // folderCategories: from Photo_carousel; categories: folders + admin albums combined
 const carouselState = { folderCategories: [], categories: [], active: 'all', loaded: false };
@@ -2832,7 +2862,16 @@ function restartHeroTimer() {
     const count = document.querySelectorAll('.hero-slide').length;
     // A slow crossfade is fine with "reduce motion" on; only the zoom effect is switched off (CSS)
     if (count < 2 || document.hidden) return;
-    heroTimer = setInterval(() => showHeroSlide((heroIndex + 1) % count), HERO_SLIDE_SECONDS * 1000);
+    const seconds = heroSlideSeconds();
+    if (dots) dots.style.setProperty('--hero-slide-duration', `${seconds}s`);
+    heroTimer = setInterval(() => {
+        const next = (heroIndex + 1) % count;
+        const nextImg = document.querySelectorAll('.hero-frame-slide')[next];
+        // On a slow connection, wait for the next photo instead of fading to an empty frame
+        if (nextImg && !(nextImg.complete && nextImg.naturalWidth)) { loadHeroSlide(next); return; }
+        showHeroSlide(next);
+        if (dots) { const d = dots.querySelector('.hero-dot.is-active'); if (d) { d.classList.remove('is-active'); void d.offsetWidth; d.classList.add('is-active'); } }
+    }, seconds * 1000);
 }
 
 // --- Lightbox: swipe left/right on touch screens ---
