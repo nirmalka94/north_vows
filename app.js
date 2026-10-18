@@ -345,6 +345,48 @@ const DEMO_CONTENT = {
 };
 
 // ==========================================================================
+// Text from the admin panel, remembered in the browser
+// The page HTML ships with default wording; saved settings arrive a moment
+// later from the server. Re-applying the last-seen settings straight away
+// stops returning visitors from seeing the wording change after load.
+// ==========================================================================
+const TEXT_CACHE_KEY = 'nv_text_v1';
+const CACHED_TEXT_FIELDS = {
+    heroSubtitle: 'heroSubtitle', heroDesc: 'heroDesc',
+    aboutSubtitle: 'aboutSubtitle', aboutTitle: 'aboutTitle', aboutDesc1: 'aboutDesc1', aboutDesc2: 'aboutDesc2',
+    photographerName: 'photographerNameDisplay', photographerRole: 'photographerRoleDisplay', photographerBio: 'photographerBioDisplay'
+};
+
+function applyTextSettings(settings) {
+    Object.entries(CACHED_TEXT_FIELDS).forEach(([key, id]) => {
+        const el = document.getElementById(id);
+        if (el && settings[key] && el.textContent !== settings[key]) el.textContent = settings[key];
+    });
+    if (settings.heroTitle) {
+        const [line1, line2] = settings.heroTitle.includes('|')
+            ? settings.heroTitle.split('|', 2).map(t => t.trim())
+            : [settings.heroTitle.split(' ')[0], settings.heroTitle.split(' ').slice(1).join(' ')];
+        const el = document.getElementById('heroTitle');
+        const html = line2 ? `${escapeHtml(line1)} <span>${escapeHtml(line2)}</span>` : `<span>${escapeHtml(line1)}</span>`;
+        if (el && el.innerHTML !== html) el.innerHTML = html;
+    }
+}
+
+function rememberTextSettings(settings) {
+    try {
+        const keep = {};
+        [...Object.keys(CACHED_TEXT_FIELDS), 'heroTitle'].forEach(k => { if (settings[k]) keep[k] = settings[k]; });
+        localStorage.setItem(TEXT_CACHE_KEY, JSON.stringify(keep));
+    } catch (e) { /* storage unavailable */ }
+}
+
+// Runs as soon as this script loads (before the server responds)
+try {
+    const cachedText = JSON.parse(localStorage.getItem(TEXT_CACHE_KEY) || 'null');
+    if (cachedText && !DEMO_MODE) applyTextSettings(cachedText);
+} catch (e) { /* ignore */ }
+
+// ==========================================================================
 // Application State
 // ==========================================================================
 const state = {
@@ -520,6 +562,8 @@ async function hydrateSiteUI() {
             }
         });
     }
+
+    if (!DEMO_MODE) rememberTextSettings(state.settings);
 
     // 4. About Bio Elements
     document.getElementById('aboutSubtitle').textContent = state.settings.aboutSubtitle;
