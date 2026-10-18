@@ -871,7 +871,8 @@ function closeAdminPanel() {
 
 // Lock screen enter authentication
 async function authenticateAdmin() {
-    const pass = adminPassword.value;
+    // Ignore stray spaces from copy-paste or phone keyboards (saved passcodes are always trimmed)
+    const pass = adminPassword.value.trim();
 
     // --- Try live PHP API first ---
     try {
@@ -2797,5 +2798,17 @@ if (aboutMoreToggle) {
     aboutMoreToggle.addEventListener('click', () => {
         toggleDisclosure(aboutMoreToggle, aboutMoreToggle.closest('.about-copy'));
         aboutMoreToggle.textContent = aboutMoreToggle.getAttribute('aria-expanded') === 'true' ? 'Read less' : 'Read more';
+    });
+}
+
+// Lock screen: show / hide the passcode while typing
+const adminShowPass = document.getElementById('adminShowPass');
+if (adminShowPass) {
+    adminShowPass.addEventListener('click', () => {
+        const show = adminPassword.type === 'password';
+        adminPassword.type = show ? 'text' : 'password';
+        adminShowPass.setAttribute('aria-pressed', String(show));
+        adminShowPass.setAttribute('aria-label', show ? 'Hide passcode' : 'Show passcode');
+        adminPassword.focus();
     });
 }

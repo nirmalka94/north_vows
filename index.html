@@ -40,7 +40,7 @@
 
     <!-- Stylesheet. Bump ?v= on every deploy so browsers fetch the new file
          (Hostinger tells browsers to cache CSS/JS for 7 days). -->
-    <link rel="stylesheet" href="style.css?v=20261019d">
+    <link rel="stylesheet" href="style.css?v=20261019e">
     <link rel="icon" type="image/png" href="Assets/logo.png">
 
     <!-- Google Business Schema Markup (JSON-LD) -->
@@ -783,7 +783,10 @@
                 <div class="lock-form">
                     <h3>Portfolio Manager</h3>
                     <div class="lock-input-group">
-                        <input type="password" class="lock-input" id="adminPassword" placeholder="••••" maxlength="64" autocomplete="current-password">
+                        <input type="password" class="lock-input" id="adminPassword" placeholder="••••" maxlength="64" autocomplete="current-password" autocapitalize="off" autocorrect="off" spellcheck="false">
+                        <button type="button" class="lock-show" id="adminShowPass" aria-label="Show passcode" aria-pressed="false">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                        </button>
                         <button class="lock-btn" id="adminUnlockBtn">Enter</button>
                     </div>
                     <div class="lock-error" id="lockError"></div>
@@ -1351,6 +1354,6 @@
 
     <!-- Scripts -->
     <!-- Bump ?v= on every deploy (see stylesheet note) -->
-    <script src="app.js?v=20261019d"></script>
+    <script src="app.js?v=20261019e"></script>
 </body>
 </html>
