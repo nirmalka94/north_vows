@@ -35,8 +35,10 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@200;300;400;500;600&display=swap">
 
-    <!-- Stylesheet -->
-    <link rel="stylesheet" href="style.css">
+    <!-- Stylesheet. Bump ?v= on every deploy so browsers fetch the new file
+         (Hostinger tells browsers to cache CSS/JS for 7 days). -->
+    <link rel="stylesheet" href="style.css?v=20261019c">
+    <link rel="icon" type="image/png" href="Assets/logo.png">
 
     <!-- Google Business Schema Markup (JSON-LD) -->
     <script type="application/ld+json" id="schemaData">
@@ -67,10 +69,24 @@
         { "@type": "City", "name": "Cambridge" },
         { "@type": "Country", "name": "Canada" }
       ],
-      "priceRange": "$$"
+      "priceRange": "$$",
+      "currenciesAccepted": "CAD",
+      "hasMap": "https://www.google.com/maps/search/?api=1&query=Kitchener%2C+ON+N2E+2K2",
+      "founder": {
+        "@type": "Person",
+        "name": "Abin",
+        "jobTitle": "Founder & Lead Photographer"
+      },
+      "knowsAbout": ["Wedding photography", "Family photography", "Portrait photography", "Birthday photography", "Professional headshots", "Engagement photography"],
+      "makesOffer": [
+        { "@type": "Offer", "name": "Mini Sessions", "priceSpecification": { "@type": "PriceSpecification", "minPrice": 100, "priceCurrency": "CAD" } },
+        { "@type": "Offer", "name": "Family Sessions", "priceSpecification": { "@type": "PriceSpecification", "minPrice": 200, "priceCurrency": "CAD" } },
+        { "@type": "Offer", "name": "Wedding Photography", "priceSpecification": { "@type": "PriceSpecification", "minPrice": 500, "priceCurrency": "CAD" } },
+        { "@type": "Offer", "name": "Tailor-made packages for other events (pre-wedding, intimate functions, graduation, prom, headshots)" }
+      ]
     }
     </script>
-    <script type="application/ld+json" id="faqSchema"></script>
+    <script type="application/ld+json" id="faqSchema">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"Which areas do you cover? Is there a travel fee?","acceptedAnswer":{"@type":"Answer","text":"We are based in Kitchener and travel within Kitchener, Waterloo and Cambridge at no extra cost. For other locations in Ontario and across Canada, we add a travel fee that we quote upfront. We only take bookings within Canada."}},{"@type":"Question","name":"How soon will we receive our photos?","acceptedAnswer":{"@type":"Answer","text":"Delivery depends on the size of your event. We agree a delivery date with you when we plan your package, so you know exactly when to expect your gallery."}},{"@type":"Question","name":"How do we book our date?","acceptedAnswer":{"@type":"Answer","text":"Send us your date through the form or WhatsApp. Once we confirm availability, a signed agreement and a retainer secure your date. The balance is due one week before the event."}},{"@type":"Question","name":"How many photos will we get?","acceptedAnswer":{"@type":"Answer","text":"It depends on the package and the length of your session. We confirm it with you before you book, so there are no surprises. Every image is individually edited, never just filtered."}},{"@type":"Question","name":"Do you offer videography?","acceptedAnswer":{"@type":"Answer","text":"Yes. Videography is available on its own or together with photography. Choose \"Photography + Videography\" in the contact form and we will send a combined quote."}},{"@type":"Question","name":"Can we print our photos?","acceptedAnswer":{"@type":"Answer","text":"Yes. Every gallery comes with high-resolution downloads and a personal print release, so you can print anywhere you like."}}]}</script>
 </head>
 <body>
     <div class="demo-banner" id="demoBanner" hidden>Preview mode: reviews, stories, portfolio and Instagram show sample content. This is never shown on the live site.</div>
@@ -155,18 +171,27 @@
     </section>
 
     <!-- ==========================================================================
-         Studio Intro (before Portfolio)
+         About: studio intro + photographer (one compact block)
          ========================================================================== -->
-    <section class="studio-identity-section section-spacing-sm">
+    <section id="about" class="about-intro section-spacing-sm section-light">
         <div class="container">
-            <div class="studio-identity-inner">
-                <div class="studio-intro-heading">
-                    <span class="section-subtitle" id="aboutSubtitle">The Studio Philosophy</span>
+            <div class="about-intro-inner">
+                <figure class="about-portrait">
+                    <img src="Assets/Photographer_Main.jpeg" alt="Abin, founder and lead photographer at North Vows Photography" loading="lazy" width="1152" height="1600">
+                </figure>
+                <div class="about-copy">
+                    <span class="section-subtitle" id="aboutSubtitle">The Eye Behind The Lens</span>
                     <h2 class="studio-philosophy-title" id="aboutTitle">We believe in quiet, meaningful details.</h2>
-                </div>
-                <div class="studio-info">
-                    <p class="bio-text" id="aboutDesc1">North Vows Photography was founded on the philosophy of visual simplicity. We step back to let moments unfold naturally, focusing on light, space, and quiet connections that often go unnoticed in the rush of life.</p>
-                    <p class="bio-text" id="aboutDesc2">We photograph weddings, families, portraits and professional headshots across Canada. Based in Kitchener, Ontario, we serve Kitchener, Waterloo, Cambridge and the surrounding region.</p>
+                    <p class="about-name">
+                        <span class="photographer-name" id="photographerNameDisplay">Abin</span>
+                        <span class="photographer-role" id="photographerRoleDisplay">Founder &amp; Lead Photographer</span>
+                    </p>
+                    <p class="bio-text" id="photographerBioDisplay"></p>
+                    <div class="about-more" id="aboutMore">
+                        <p class="bio-text" id="aboutDesc1">North Vows Photography was founded on the philosophy of visual simplicity. We step back to let moments unfold naturally, focusing on light, space, and quiet connections that often go unnoticed in the rush of life.</p>
+                        <p class="bio-text" id="aboutDesc2">We photograph weddings, families, portraits and professional headshots across Canada. Based in Kitchener, Ontario, we serve Kitchener, Waterloo, Cambridge and the surrounding region.</p>
+                    </div>
+                    <button type="button" class="about-more-toggle" id="aboutMoreToggle" aria-expanded="false" aria-controls="aboutMore">Read more</button>
                     <div class="intro-actions">
                         <a href="#contact" class="intro-cta" data-track="intro_check_date">Check your date</a>
                         <a href="#pricing" class="intro-link">See packages &rarr;</a>
@@ -215,6 +240,43 @@
     </section>
 
     <!-- ==========================================================================
+         Instagram Featured Section
+         ========================================================================== -->
+    <section id="instagram" class="instagram-feed gold-band">
+        <div class="container">
+            <div class="instagram-header">
+                <div class="instagram-profile">
+                    <img src="Assets/logo.png" alt="North Vows Instagram profile" class="instagram-avatar" id="instaAvatar">
+                    <div class="instagram-meta">
+                        <span class="handle" id="instaHandle">@thenorthvows</span>
+                        <span class="subtitle">Latest works &amp; updates</span>
+                    </div>
+                </div>
+                <p class="instagram-tagline">Recent sessions and behind-the-scenes moments, shared on Instagram and Facebook.</p>
+                <div class="instagram-actions">
+                    <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="instagram-follow-btn" id="instaFollowBtn">
+                    Follow
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                        <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
+                        <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
+                    </svg>
+                </a>
+                    <a href="https://www.facebook.com/Northvowsphotography" target="_blank" rel="noopener noreferrer" class="instagram-follow-btn" data-social="facebook">
+                        Facebook
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Instagram Grid -->
+            <div class="instagram-grid" id="instagramGrid">
+                <!-- Dynamic items loaded by JS -->
+            </div>
+        </div>
+    </section>
+
+    <!-- ==========================================================================
          Real Wedding Stories (hidden until stories are added in admin)
          ========================================================================== -->
     <section id="stories" class="section-spacing stories-section" hidden>
@@ -230,33 +292,9 @@
     </section>
 
     <!-- ==========================================================================
-         About Section (Photographer)
-         ========================================================================== -->
-    <section id="about" class="section-spacing">
-        <div class="container">
-            <div class="about-photographer-wrap">
-                <div class="photographer-images">
-                    <div class="img-wrapper main-img-wrapper">
-                        <img src="Assets/Photographer_Main.jpeg" alt="Lead Photographer" class="photographer-img main-img">
-                    </div>
-                    <div class="img-wrapper secondary-img-wrapper">
-                        <img src="Assets/Photographer_2.jpeg" alt="Photographer in Action" class="photographer-img secondary-img">
-                    </div>
-                </div>
-                <div class="photographer-details">
-                    <span class="section-subtitle">The Visionary</span>
-                    <h3 class="photographer-name" id="photographerNameDisplay">Abin</h3>
-                    <span class="photographer-role" id="photographerRoleDisplay">Founder &amp; Lead Photographer</span>
-                    <p class="photographer-bio-text" id="photographerBioDisplay"></p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- ==========================================================================
          Services & Investment Section
          ========================================================================== -->
-    <section id="services" class="section-spacing services-section">
+    <section id="services" class="section-spacing services-section gold-glow">
         <div class="container">
             <div class="section-title-wrap">
                 <span class="section-subtitle">What We Offer</span>
@@ -377,8 +415,62 @@
                 <h2 class="section-title">Packages</h2>
                 <p class="section-intro">Simple starting prices for our most popular sessions. Every plan can be customised to what you need, and any other event gets a package made just for it. All prices are in Canadian dollars (CAD).</p>
             </div>
+            <!-- Pre-rendered defaults so search engines and AI assistants can read the prices
+                 without JavaScript; app.js re-renders this from the admin settings. -->
             <div class="packages-grid" id="packagesGrid">
-                <!-- Dynamic packages loaded by JS -->
+                <article class="package-card ">
+                <h3 class="package-name">Mini Sessions</h3>
+                <p class="package-tagline">A short, relaxed shoot that fits into a busy week.</p>
+                <div class="package-price"><span class="package-price-note">Starting from</span>
+                <span class="package-amount">$100</span><span class="package-currency">CAD</span></div>
+                <button type="button" class="package-toggle" aria-expanded="false">What's included</button>
+                <div class="package-details">
+                <ul class="package-includes"><li>Ideal for couples, solo portraits and seasonal photos</li><li>Relaxed and guided, no posing experience needed</li><li>Hand-edited, high-resolution photos</li></ul>
+                </div>
+                <a href="#contact" class="package-cta" data-package-index="0">Book a mini session</a>
+                </article>
+                <article class="package-card ">
+                <h3 class="package-name">Family Sessions</h3>
+                <p class="package-tagline">Natural, unposed photos of the people who matter most.</p>
+                <div class="package-price"><span class="package-price-note">Starting from</span>
+                <span class="package-amount">$200</span><span class="package-currency">CAD</span></div>
+                <button type="button" class="package-toggle" aria-expanded="false">What's included</button>
+                <div class="package-details">
+                <ul class="package-includes"><li>Families of every size, kids and pets welcome</li><li>At home, in a park, or at your favourite spot</li><li>Hand-edited, high-resolution photos</li></ul>
+                </div>
+                <a href="#contact" class="package-cta" data-package-index="1">Book a family session</a>
+                </article>
+                <article class="package-card featured">
+                <span class="package-badge">Signature</span>
+                <h3 class="package-name">Weddings</h3>
+                <p class="package-tagline">Your day told honestly, from the quiet moments to the celebration.</p>
+                <div class="package-price"><span class="package-price-note">Starting from</span>
+                <span class="package-amount">$500</span><span class="package-currency">CAD</span></div>
+                <button type="button" class="package-toggle" aria-expanded="false">What's included</button>
+                <div class="package-details">
+                <ul class="package-includes"><li>Coverage built around your day and your timeline</li><li>Personal planning help before the wedding</li><li>Photography, videography, or both</li><li>Full digital gallery to share with family</li></ul>
+                </div>
+                <a href="#contact" class="package-cta" data-package-index="2">Check my date</a>
+                </article>
+                <article class="package-card package-tailored">
+                <div>
+                <span class="package-price-note">Something else in mind?</span>
+                <h3 class="package-name">Tailor-Made Packages</h3>
+                <p class="package-tailored-text">Pre-wedding shoots, intimate functions, graduations, prom, professional headshots, or something completely different. Tell us what you need and we will build a package and price around it.</p>
+                </div>
+                <div>
+                <button type="button" class="package-toggle" aria-expanded="false">What we can tailor</button>
+                <div class="package-details">
+                <ul class="package-includes">
+                <li>Coverage hours that match your schedule</li>
+                <li>Photography, videography, or both</li>
+                <li>Locations across Kitchener, Waterloo, Cambridge and beyond</li>
+                <li>A clear quote before you book, with no hidden extras</li>
+                </ul>
+                </div>
+                <a href="#contact" class="package-cta" id="tailoredPackageCta">Get a custom quote</a>
+                </div>
+                </article>
             </div>
         </div>
     </section>
@@ -402,42 +494,6 @@
     </section>
 
     <!-- ==========================================================================
-         Instagram Featured Section
-         ========================================================================== -->
-    <section id="instagram" class="instagram-feed section-spacing">
-        <div class="container">
-            <div class="instagram-header">
-                <div class="instagram-profile">
-                    <img src="Assets/logo.png" alt="North Vows Instagram profile" class="instagram-avatar" id="instaAvatar">
-                    <div class="instagram-meta">
-                        <span class="handle" id="instaHandle">@thenorthvows</span>
-                        <span class="subtitle">Latest works & updates</span>
-                    </div>
-                </div>
-                <div class="instagram-actions">
-                    <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="instagram-follow-btn" id="instaFollowBtn">
-                    Follow
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
-                        <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line>
-                        <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
-                    </svg>
-                </a>
-                    <a href="https://www.facebook.com/Northvowsphotography" target="_blank" rel="noopener noreferrer" class="instagram-follow-btn" data-social="facebook">
-                        Facebook
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
-                    </a>
-                </div>
-            </div>
-
-            <!-- Instagram Grid -->
-            <div class="instagram-grid" id="instagramGrid">
-                <!-- Dynamic items loaded by JS -->
-            </div>
-        </div>
-    </section>
-
-    <!-- ==========================================================================
          FAQ
          ========================================================================== -->
     <section id="faq" class="section-spacing faq-section">
@@ -451,8 +507,32 @@
                 <button type="button" class="faq-toggle" id="faqToggle" aria-expanded="false" aria-controls="faqList">
                     <span>Show questions</span>
                 </button>
+                <!-- Pre-rendered defaults (readable without JavaScript); app.js re-renders from admin settings -->
                 <div class="faq-list" id="faqList">
-                    <!-- Dynamic FAQ loaded by JS -->
+                    <details class="faq-item">
+                    <summary class="faq-question">Which areas do you cover? Is there a travel fee?</summary>
+                    <div class="faq-answer"><p>We are based in Kitchener and travel within Kitchener, Waterloo and Cambridge at no extra cost. For other locations in Ontario and across Canada, we add a travel fee that we quote upfront. We only take bookings within Canada.</p></div>
+                    </details>
+                    <details class="faq-item">
+                    <summary class="faq-question">How soon will we receive our photos?</summary>
+                    <div class="faq-answer"><p>Delivery depends on the size of your event. We agree a delivery date with you when we plan your package, so you know exactly when to expect your gallery.</p></div>
+                    </details>
+                    <details class="faq-item">
+                    <summary class="faq-question">How do we book our date?</summary>
+                    <div class="faq-answer"><p>Send us your date through the form or WhatsApp. Once we confirm availability, a signed agreement and a retainer secure your date. The balance is due one week before the event.</p></div>
+                    </details>
+                    <details class="faq-item">
+                    <summary class="faq-question">How many photos will we get?</summary>
+                    <div class="faq-answer"><p>It depends on the package and the length of your session. We confirm it with you before you book, so there are no surprises. Every image is individually edited, never just filtered.</p></div>
+                    </details>
+                    <details class="faq-item">
+                    <summary class="faq-question">Do you offer videography?</summary>
+                    <div class="faq-answer"><p>Yes. Videography is available on its own or together with photography. Choose "Photography + Videography" in the contact form and we will send a combined quote.</p></div>
+                    </details>
+                    <details class="faq-item">
+                    <summary class="faq-question">Can we print our photos?</summary>
+                    <div class="faq-answer"><p>Yes. Every gallery comes with high-resolution downloads and a personal print release, so you can print anywhere you like.</p></div>
+                    </details>
                 </div>
             </div>
         </div>
@@ -645,7 +725,15 @@
         </div>
         <div class="container footer-bottom">
             <span class="footer-copy" id="footerCopy">&copy; 2026 North Vows Photography. All rights reserved.</span>
-            <a href="#contact" class="footer-cta" data-track="footer_book">Check your date &rarr;</a>
+            <div class="footer-bottom-actions">
+                <a href="#contact" class="footer-cta" data-track="footer_book">Check your date &rarr;</a>
+                <button type="button" class="admin-trigger-btn" id="adminTrigger" aria-label="Studio login" title="Studio login">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                        <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                    </svg>
+                </button>
+            </div>
         </div>
     </footer>
 
@@ -1259,6 +1347,7 @@
     </a>
 
     <!-- Scripts -->
-    <script src="app.js"></script>
+    <!-- Bump ?v= on every deploy (see stylesheet note) -->
+    <script src="app.js?v=20261019c"></script>
 </body>
 </html>

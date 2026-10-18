@@ -4300,3 +4300,301 @@ a.detail-value-secondary {
         flex-basis: calc((100% - 2rem) / 3);
     }
 }
+
+/* Footer: booking link + discreet studio login icon */
+.footer-bottom-actions {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+}
+
+.admin-trigger-btn {
+    width: 40px;
+    height: 40px;
+    background: none;
+    border: 1px solid transparent;
+    border-radius: 50%;
+}
+
+.admin-trigger-btn:hover,
+.admin-trigger-btn:focus-visible {
+    transform: none;
+    border-color: var(--color-border);
+}
+
+.admin-trigger-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* Keep the footer's bottom row clear of the floating WhatsApp button */
+.footer .container.footer-bottom {
+    padding-right: 84px;
+}
+
+/* ==========================================================================
+   About: studio intro + photographer in one compact block
+   ========================================================================== */
+.about-intro {
+    border-top: 1px solid var(--color-border);
+    border-bottom: 1px solid var(--color-border);
+    background-color: var(--bg-dark);
+}
+
+.about-intro-inner {
+    display: grid;
+    grid-template-columns: minmax(240px, 360px) 1fr;
+    gap: 4.5rem;
+    align-items: center;
+}
+
+.about-portrait {
+    margin: 0;
+    aspect-ratio: 4 / 5;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-md);
+}
+
+.about-portrait img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 35%;
+}
+
+.about-copy .studio-philosophy-title {
+    margin-bottom: 1.25rem;
+}
+
+.about-name {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.4rem 0.9rem;
+    margin-bottom: 1rem;
+}
+
+.about-name .photographer-name {
+    font-size: 1.4rem;
+    margin: 0;
+}
+
+.about-name .photographer-role {
+    margin: 0;
+}
+
+.about-copy .bio-text {
+    color: var(--color-secondary);
+    margin-bottom: 1rem;
+}
+
+.about-more {
+    margin-bottom: 2rem;
+}
+
+.about-more-toggle {
+    display: none;
+}
+
+@media (max-width: 760px) {
+    .about-intro-inner {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+    }
+    .about-portrait {
+        width: 62%;
+        max-width: 260px;
+    }
+}
+
+@media (max-width: 576px) {
+    .about-more {
+        display: none;
+        margin-bottom: 0;
+    }
+    .about-copy.is-open .about-more {
+        display: block;
+    }
+    .about-more-toggle {
+        display: inline-block;
+        margin: 0 0 1.75rem;
+        padding: 0.6rem 0;
+        background: none;
+        border: none;
+        color: var(--color-accent);
+        font-size: 0.85rem;
+        letter-spacing: 0.05em;
+        cursor: pointer;
+    }
+}
+
+/* ==========================================================================
+   Gold accents — one consistent, quiet treatment across the page
+   ========================================================================== */
+:root {
+    --gold-line: rgba(197, 168, 128, 0.3);
+    --gold-tint: rgba(197, 168, 128, 0.1);
+}
+
+/* Small gold rule before every section label ("— PORTFOLIO") */
+.section-subtitle {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.section-subtitle::before {
+    content: '';
+    width: 28px;
+    height: 1px;
+    background-color: currentColor;
+    opacity: 0.8;
+    flex-shrink: 0;
+}
+
+/* Slim gold-tinted band (Instagram) */
+.gold-band {
+    padding: 2.25rem 0;
+    background:
+        linear-gradient(90deg, var(--gold-tint) 0%, rgba(197, 168, 128, 0.03) 45%, rgba(197, 168, 128, 0.03) 55%, var(--gold-tint) 100%),
+        #0e0f11;
+    border-top: 1px solid var(--gold-line);
+    border-bottom: 1px solid var(--gold-line);
+}
+
+.instagram-feed.gold-band .instagram-header {
+    margin-bottom: 0;
+    flex-wrap: nowrap;
+    gap: 2rem;
+}
+
+.instagram-feed.gold-band:not(.is-empty) {
+    padding: 3.5rem 0;
+}
+
+.instagram-feed:not(.is-empty) .instagram-grid {
+    margin-top: 2.25rem;
+}
+
+.instagram-feed.is-empty .instagram-grid {
+    display: none;
+}
+
+.instagram-tagline {
+    flex: 1;
+    max-width: 440px;
+    margin: 0 auto;
+    text-align: center;
+    font-family: var(--font-heading);
+    font-size: 0.95rem;
+    font-weight: 300;
+    line-height: 1.6;
+    color: var(--color-secondary);
+}
+
+.instagram-feed .instagram-avatar {
+    width: 52px;
+    height: 52px;
+}
+
+.instagram-feed .instagram-actions {
+    flex-shrink: 0;
+}
+
+.instagram-feed .instagram-follow-btn {
+    border-color: var(--gold-line);
+    color: var(--color-accent);
+}
+
+.instagram-feed .instagram-follow-btn:hover {
+    background-color: var(--color-accent);
+    border-color: var(--color-accent);
+    color: var(--bg-dark);
+}
+
+@media (max-width: 900px) {
+    .instagram-feed.gold-band .instagram-header {
+        flex-wrap: wrap;
+        gap: 1rem 1.5rem;
+    }
+    .instagram-tagline {
+        order: 3;
+        flex-basis: 100%;
+        max-width: none;
+        text-align: left;
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .gold-band {
+        padding: 1.75rem 0;
+    }
+    .instagram-feed .instagram-actions {
+        width: 100%;
+        order: 4;
+    }
+    .instagram-feed .instagram-follow-btn {
+        flex: 1;
+        justify-content: center;
+    }
+}
+
+/* Soft gold glow at the top of the Services section */
+.gold-glow {
+    background:
+        radial-gradient(ellipse 70% 55% at 50% 0%, rgba(197, 168, 128, 0.09), transparent 70%),
+        var(--bg-dark);
+    border-top: 1px solid var(--gold-line);
+}
+
+/* Fine gold frame around the photos (hero frame, Abin's portrait) */
+.about-portrait {
+    outline: 1px solid var(--gold-line);
+    outline-offset: 10px;
+    margin: 10px;
+}
+
+@media (min-width: 993px) {
+    .hero-frame:not([hidden]) {
+        outline: 1px solid var(--gold-line);
+        outline-offset: 12px;
+    }
+}
+
+/* Contact form card: gold top edge and faint warm wash */
+.contact-form-container {
+    border-top: 1px solid var(--gold-line);
+    background:
+        linear-gradient(180deg, rgba(197, 168, 128, 0.06), transparent 35%),
+        var(--bg-card);
+}
+
+/* Footer: fading gold hairline across the top */
+.footer {
+    position: relative;
+    border-top: none;
+}
+
+.footer::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(197, 168, 128, 0.5), transparent);
+}
+
+/* About (Meet Abin) on ivory */
+.about-intro.section-light {
+    background-color: #f5efe4;
+    border-color: transparent;
+}
+
+.about-intro.section-light .about-portrait {
+    border-color: rgba(31, 28, 24, 0.08);
+    outline-color: rgba(138, 106, 60, 0.45);
+}

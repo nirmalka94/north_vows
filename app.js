@@ -743,15 +743,9 @@ function renderInstagramFeedGrid() {
     // Slice latest 6 posts to show
     const posts = state.instagramPosts.slice(-6).reverse();
 
-    if (posts.length === 0) {
-        const handle = state.settings.instaHandle || DEFAULT_SETTINGS.instaHandle;
-        grid.innerHTML = `
-            <a class="instagram-empty" href="https://instagram.com/${encodeURIComponent(handle.replace('@', ''))}" target="_blank" rel="noopener noreferrer">
-                <span>See our latest work on Instagram</span>
-                <strong>${escapeHtml(handle)} &rarr;</strong>
-            </a>`;
-        return;
-    }
+    // No posts yet: the section stays a slim band (profile + follow buttons)
+    document.getElementById('instagram').classList.toggle('is-empty', posts.length === 0);
+    if (posts.length === 0) return;
 
     posts.forEach(post => {
         const item = document.createElement('a');
@@ -2519,7 +2513,6 @@ if (faqToggle) {
 const CAROUSEL_API = 'api/carousel.php';
 const HERO_SLIDE_LIMIT = 8;
 const HERO_SLIDE_SECONDS = 6;
-const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
 // folderCategories: from Photo_carousel; categories: folders + admin albums combined
 const carouselState = { folderCategories: [], categories: [], active: 'all', loaded: false };
@@ -2727,7 +2720,8 @@ function showHeroSlide(i) {
 function restartHeroTimer() {
     clearInterval(heroTimer);
     const count = document.querySelectorAll('.hero-slide').length;
-    if (count < 2 || reducedMotion.matches || document.hidden) return;
+    // A slow crossfade is fine with "reduce motion" on; only the zoom effect is switched off (CSS)
+    if (count < 2 || document.hidden) return;
     heroTimer = setInterval(() => showHeroSlide((heroIndex + 1) % count), HERO_SLIDE_SECONDS * 1000);
 }
 
@@ -2744,3 +2738,12 @@ function restartHeroTimer() {
         startX = null;
     }, { passive: true });
 })();
+
+// About block on phones: the studio paragraphs sit behind "Read more"
+const aboutMoreToggle = document.getElementById('aboutMoreToggle');
+if (aboutMoreToggle) {
+    aboutMoreToggle.addEventListener('click', () => {
+        toggleDisclosure(aboutMoreToggle, aboutMoreToggle.closest('.about-copy'));
+        aboutMoreToggle.textContent = aboutMoreToggle.getAttribute('aria-expanded') === 'true' ? 'Read less' : 'Read more';
+    });
+}
