@@ -47,8 +47,8 @@ VALUES ('passcode', 'change_me');  -- set your own; must match DEFAULT_PASSCODE 
 -- Location update (Oct 2026): settings saved in the DB override the defaults in app.js,
 -- so re-run these if the site still shows the old London / street address.
 UPDATE `nv_settings` SET `setting_value` = 'Kitchener, ON N2E 2K2' WHERE `setting_key` = 'studioAddress';
-UPDATE `nv_settings` SET `setting_value` = 'Available worldwide for weddings, editorial campaigns, architectural portfolios, and select creative projects. Based in Kitchener, Ontario, serving Kitchener, Waterloo and Cambridge.' WHERE `setting_key` = 'aboutDesc2';
-UPDATE `nv_settings` SET `setting_value` = 'Wedding, engagement and portrait photographer serving Kitchener, Waterloo and Cambridge, Ontario. Minimal, elegant fine art photography by North Vows.' WHERE `setting_key` = 'siteDesc';
+UPDATE `nv_settings` SET `setting_value` = 'We photograph weddings, families, portraits and professional headshots across Canada. Based in Kitchener, Ontario, we serve Kitchener, Waterloo, Cambridge and the surrounding region.' WHERE `setting_key` = 'aboutDesc2';
+UPDATE `nv_settings` SET `setting_value` = 'Wedding, family and portrait photographer in Kitchener, Waterloo and Cambridge, Ontario. Natural, timeless photography for clients across Canada.' WHERE `setting_key` = 'siteDesc';
 
 -- Placeholder cleanup (Oct 2026): replace the stock Instagram avatar with the studio logo.
 UPDATE `nv_settings` SET `setting_value` = 'Assets/logo.png' WHERE `setting_key` = 'instaAvatar' AND `setting_value` LIKE '%unsplash.com%';
@@ -58,3 +58,10 @@ DELETE FROM `nv_instagram` WHERE `id` IN ('insta-1','insta-2','insta-3','insta-4
 -- Studio email (Oct 2026): receives website enquiries from the contact form.
 INSERT INTO `nv_settings` (`setting_key`, `setting_value`) VALUES ('studioEmail', 'thenorthvows@gmail.com')
 ON DUPLICATE KEY UPDATE `setting_value` = VALUES(`setting_value`);
+
+-- Copy refresh (Oct 2026): local, Canada-only wording. Only changes rows that were saved from the admin panel.
+UPDATE `nv_settings` SET `setting_value` = 'North Vows Photography | Wedding & Family Photographer in Kitchener-Waterloo' WHERE `setting_key` = 'siteTitle';
+UPDATE `nv_settings` SET `setting_value` = 'Kitchener · Waterloo · Cambridge' WHERE `setting_key` = 'heroSubtitle';
+UPDATE `nv_settings` SET `setting_value` = 'Wedding & Family | Photographer' WHERE `setting_key` = 'heroTitle';
+UPDATE `nv_settings` SET `setting_value` = 'Natural, timeless photos of your wedding, your family and the moments in between. Based in Kitchener-Waterloo, available across Canada.' WHERE `setting_key` = 'heroDesc';
+UPDATE `nv_settings` SET `setting_value` = 'Kitchener wedding photographer, Waterloo wedding photographer, Cambridge wedding photographer, Kitchener-Waterloo photographer, family photographer Kitchener, engagement photos Waterloo, headshots Kitchener, Ontario wedding photographer' WHERE `setting_key` = 'siteKeywords';

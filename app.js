@@ -245,16 +245,16 @@ const SAMPLE_INSTAGRAM = [
 ];
 
 const DEFAULT_SETTINGS = {
-    siteTitle: 'North Vows | Minimalist Fine Art Photography Portfolio',
+    siteTitle: 'North Vows Photography | Wedding & Family Photographer in Kitchener-Waterloo',
     siteKeywords: 'Kitchener wedding photographer, Waterloo wedding photographer, Cambridge wedding photographer, Kitchener-Waterloo photographer, engagement photos Kitchener, family photographer Waterloo, headshots Kitchener, fine art photography Ontario',
-    siteDesc: 'Wedding, engagement and portrait photographer serving Kitchener, Waterloo and Cambridge, Ontario. Minimal, elegant fine art photography by North Vows.',
-    heroSubtitle: 'Fine Art Photography',
-    heroTitle: 'Capturing Pure Devotion',
-    heroDesc: 'We craft raw, minimalist visuals that preserve stories of quiet romance, stark natural beauty, and modern design.',
+    siteDesc: 'Wedding, family and portrait photographer in Kitchener, Waterloo and Cambridge, Ontario. Natural, timeless photography for clients across Canada.',
+    heroSubtitle: 'Kitchener · Waterloo · Cambridge',
+    heroTitle: 'Wedding & Family | Photographer', // '|' marks the line break
+    heroDesc: 'Natural, timeless photos of your wedding, your family and the moments in between. Based in Kitchener-Waterloo, available across Canada.',
     aboutSubtitle: 'The Eye Behind The Lens',
     aboutTitle: 'We believe in quiet, meaningful details.',
     aboutDesc1: 'North Vows was founded on the philosophy of visual simplicity. We step back to let moments unfold naturally, focusing on light, space, and quiet connections that often go unnoticed in the rush of life.',
-    aboutDesc2: 'Available worldwide for weddings, editorial campaigns, architectural portfolios, and select creative projects. Based in Kitchener, Ontario, serving Kitchener, Waterloo and Cambridge.',
+    aboutDesc2: 'We photograph weddings, families, portraits and professional headshots across Canada. Based in Kitchener, Ontario, we serve Kitchener, Waterloo, Cambridge and the surrounding region.',
     instaHandle: '@northvows_photo',
     instaAvatar: 'Assets/logo.png',
     whatsappNumber: '+12269894884',
@@ -267,6 +267,7 @@ const DEFAULT_SETTINGS = {
     studioAddress: 'Kitchener, ON N2E 2K2',
     heroImage: '',
     googleReviewsUrl: '',
+    gaMeasurementId: '',
     // Lists below are stored as JSON strings in nv_settings and edited in
     // Admin → "Pricing, Reviews & FAQ".
     // Starting-price plans. Every other event type gets the "tailor-made" card,
@@ -306,7 +307,7 @@ const DEFAULT_SETTINGS = {
     faqs: JSON.stringify([
         {
             q: 'Which areas do you cover? Is there a travel fee?',
-            a: 'We are based in Kitchener and travel within Kitchener, Waterloo and Cambridge at no extra cost. For other locations in Ontario, or for destination weddings, we add a travel fee that we quote upfront.'
+            a: 'We are based in Kitchener and travel within Kitchener, Waterloo and Cambridge at no extra cost. For other locations in Ontario and across Canada, we add a travel fee that we quote upfront. We only take bookings within Canada.'
         },
         {
             q: 'How soon will we receive our photos?',
@@ -483,9 +484,7 @@ async function hydrateSiteUI() {
     const schemaEl = document.getElementById('schemaData');
     if (schemaEl) {
         const schema = JSON.parse(schemaEl.textContent);
-        schema.name = state.settings.siteTitle.split('|')[0].trim() + " Photography";
         schema.description = state.settings.siteDesc;
-        schema.url = window.location.origin + '/';
         schemaEl.textContent = JSON.stringify(schema, null, 2);
     }
 
@@ -498,15 +497,14 @@ async function hydrateSiteUI() {
     // 3. Hero Layout Elements
     document.getElementById('heroSubtitle').textContent = state.settings.heroSubtitle;
     
-    // Highlight first/second word if possible
+    // Second line is emphasised: split at '|' if present, otherwise after the first word
     const titleVal = state.settings.heroTitle || DEFAULT_SETTINGS.heroTitle;
-    const splitTitle = titleVal.split(' ');
-    if (splitTitle.length > 1) {
-        const lastWord = splitTitle.slice(1).join(' ');
-        document.getElementById('heroTitle').innerHTML = `${splitTitle[0]} <span>${lastWord}</span>`;
-    } else {
-        document.getElementById('heroTitle').innerHTML = `<span>${titleVal}</span>`;
-    }
+    let [titleLine1, titleLine2] = titleVal.includes('|')
+        ? titleVal.split('|', 2).map(t => t.trim())
+        : [titleVal.split(' ')[0], titleVal.split(' ').slice(1).join(' ')];
+    document.getElementById('heroTitle').innerHTML = titleLine2
+        ? `${escapeHtml(titleLine1)} <span>${escapeHtml(titleLine2)}</span>`
+        : `<span>${escapeHtml(titleLine1)}</span>`;
     
     document.getElementById('heroDesc').textContent = state.settings.heroDesc;
 
@@ -535,6 +533,8 @@ async function hydrateSiteUI() {
     const photographerBioEl = document.getElementById('photographerBioDisplay');
     if (photographerBioEl) photographerBioEl.textContent = state.settings.photographerBio || DEFAULT_SETTINGS.photographerBio;
 
+    loadAnalytics(state.settings.gaMeasurementId);
+
     // 6. Packages, stories, reviews & FAQ
     renderPackages();
     renderStories();
@@ -542,29 +542,26 @@ async function hydrateSiteUI() {
     renderFaqs();
 
     // 7. Contact Info Details
-    const contactPhoneEl = document.getElementById('contactPhoneDisplay');
-    if (contactPhoneEl) {
-        const phone = state.settings.studioPhone || DEFAULT_SETTINGS.studioPhone;
-        contactPhoneEl.textContent = phone;
-        contactPhoneEl.href = `tel:${phone.replace(/[^\d+]/g, '')}`;
-    }
-    const contactEmailEl = document.getElementById('contactEmailDisplay');
-    if (contactEmailEl) {
-        const studioEmail = state.settings.studioEmail || DEFAULT_SETTINGS.studioEmail;
-        contactEmailEl.textContent = studioEmail;
-        contactEmailEl.href = `mailto:${studioEmail}`;
-    }
+    const studioPhone = state.settings.studioPhone || DEFAULT_SETTINGS.studioPhone;
+    const studioEmail = state.settings.studioEmail || DEFAULT_SETTINGS.studioEmail;
+    const handle = state.settings.instaHandle || DEFAULT_SETTINGS.instaHandle;
+    document.querySelectorAll('[data-contact="phone"]').forEach(el => {
+        el.textContent = studioPhone;
+        el.href = `tel:${studioPhone.replace(/[^\d+]/g, '')}`;
+    });
+    document.querySelectorAll('[data-contact="email"]').forEach(el => {
+        el.textContent = studioEmail;
+        el.href = `mailto:${studioEmail}`;
+    });
+    document.querySelectorAll('[data-contact="instagram"]').forEach(el => {
+        el.textContent = handle;
+        el.href = `https://instagram.com/${encodeURIComponent(handle.replace('@', ''))}`;
+    });
     const contactAddressEl = document.getElementById('contactAddressDisplay');
     if (contactAddressEl) {
         const address = state.settings.studioAddress || DEFAULT_SETTINGS.studioAddress;
         contactAddressEl.textContent = address;
         contactAddressEl.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`;
-    }
-    const contactInstaEl = document.getElementById('contactInstaHandleDisplay');
-    if (contactInstaEl) {
-        const handle = state.settings.instaHandle || DEFAULT_SETTINGS.instaHandle;
-        contactInstaEl.textContent = handle;
-        contactInstaEl.href = `https://instagram.com/${encodeURIComponent(handle.replace('@', ''))}`;
     }
 
     // 8. Instagram Profile
@@ -850,6 +847,7 @@ if (contactForm) {
         if (via === 'whatsapp') {
             const number = (state.settings.whatsappNumber || DEFAULT_SETTINGS.whatsappNumber).replace(/[^\d+]/g, '');
             window.open(`https://wa.me/${number}?text=${encodeURIComponent(enquiryLines(enquiry).join('\n'))}`, '_blank', 'noopener,noreferrer');
+            trackEvent('generate_lead', { method: 'whatsapp', event_type: enquiry.eventType || 'not set' });
             contactForm.reset();
             setFormStatus('WhatsApp opened with your enquiry. Press send there to reach us.', 'success');
             return;
@@ -862,9 +860,11 @@ if (contactForm) {
         try {
             const res = await db.sendEnquiry(enquiry);
             if (!res || !res.success) throw new Error(res?.error || 'Send failed');
+            trackEvent('generate_lead', { method: 'email', event_type: enquiry.eventType || 'not set' });
             contactForm.reset();
             setFormStatus(`Thank you${enquiry.name ? ', ' + enquiry.name.split(' ')[0] : ''}! Your enquiry has been sent. We will get back to you soon.`, 'success');
         } catch (err) {
+            trackEvent('generate_lead', { method: 'email_app', event_type: enquiry.eventType || 'not set' });
             const studioEmail = state.settings.studioEmail || DEFAULT_SETTINGS.studioEmail;
             const subject = `Photography enquiry${enquiry.eventType ? ' – ' + enquiry.eventType : ''}${enquiry.name ? ' from ' + enquiry.name : ''}`;
             window.location.href = `mailto:${studioEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(enquiryLines(enquiry).join('\n'))}`;
@@ -1511,6 +1511,7 @@ function populateAdminSettingsForm() {
     document.getElementById('settingStudioPhone').value = state.settings.studioPhone || DEFAULT_SETTINGS.studioPhone;
     document.getElementById('settingStudioAddress').value = state.settings.studioAddress || DEFAULT_SETTINGS.studioAddress;
     document.getElementById('settingStudioEmail').value = state.settings.studioEmail || DEFAULT_SETTINGS.studioEmail;
+    document.getElementById('settingGaMeasurementId').value = state.settings.gaMeasurementId || '';
 
     document.getElementById('settingWhatsappNumber').value = state.settings.whatsappNumber || DEFAULT_SETTINGS.whatsappNumber;
     document.getElementById('settingWhatsappMessage').value = state.settings.whatsappMessage || DEFAULT_SETTINGS.whatsappMessage;
@@ -1539,7 +1540,7 @@ if (siteSettingsForm) {
             'aboutTitle', 'aboutSubtitle', 'aboutDesc1', 'aboutDesc2',
             'photographerName', 'photographerRole', 'photographerBio',
             'studioPhone', 'studioAddress', 'studioEmail',
-            'whatsappNumber', 'whatsappMessage',
+            'whatsappNumber', 'whatsappMessage', 'gaMeasurementId',
             'heroImage'
         ];
 
@@ -1887,7 +1888,15 @@ function setupGlobalEventListeners() {
     });
 
     // Admin open triggers
-    adminTrigger.addEventListener('click', openAdminPanel);
+    if (adminTrigger) adminTrigger.addEventListener('click', openAdminPanel);
+    const openAdminFromHash = () => {
+        if (window.location.hash === '#admin') {
+            openAdminPanel();
+            history.replaceState(null, '', window.location.pathname + window.location.search);
+        }
+    };
+    window.addEventListener('hashchange', openAdminFromHash);
+    openAdminFromHash();
     adminCloseBtn.addEventListener('click', closeAdminPanel);
     adminLogoutBtn.addEventListener('click', lockAdminDashboard);
     
@@ -2023,6 +2032,7 @@ function renderPackages() {
 // Pre-fills the contact form from a package's "Check my date" button
 function prefillEnquiry(pkg) {
     if (!pkg) return;
+    trackEvent('select_package', { package_name: pkg.name });
     const eventSelect = document.getElementById('contactEventType');
     if (eventSelect && pkg.eventType) {
         const match = [...eventSelect.options].find(o => o.text === pkg.eventType);
@@ -2430,3 +2440,54 @@ async function compressImage(file) {
         return file;
     }
 }
+
+// ==========================================================================
+// Service cards → pre-filled enquiry
+// ==========================================================================
+document.querySelectorAll('.service-card[data-event-type]').forEach(card => {
+    card.addEventListener('click', () => {
+        const eventType = card.dataset.eventType;
+        const select = document.getElementById('contactEventType');
+        if (select) select.value = eventType;
+        const message = document.getElementById('contactMessage');
+        const serviceName = card.querySelector('.service-name')?.textContent.trim() || eventType;
+        if (message && !message.value.trim()) message.value = `Hi! I'd like to ask about ${serviceName.toLowerCase()}.`;
+        trackEvent('select_service', { event_type: eventType });
+        document.getElementById('contact').scrollIntoView({ behavior: 'smooth' });
+        setTimeout(() => document.getElementById('contactName')?.focus({ preventScroll: true }), 600);
+    });
+});
+
+// ==========================================================================
+// Analytics (Google Analytics 4, optional)
+// Set the Measurement ID in Admin → SEO & Settings. Nothing loads without it.
+// ==========================================================================
+let analyticsLoaded = false;
+
+function loadAnalytics(measurementId) {
+    if (analyticsLoaded || DEMO_MODE || !/^G-[A-Z0-9]+$/i.test(measurementId || '')) return;
+    analyticsLoaded = true;
+    const script = document.createElement('script');
+    script.async = true;
+    script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(measurementId)}`;
+    document.head.appendChild(script);
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = function () { window.dataLayer.push(arguments); };
+    window.gtag('js', new Date());
+    window.gtag('config', measurementId);
+}
+
+function trackEvent(name, params = {}) {
+    if (typeof window.gtag === 'function') window.gtag('event', name, params);
+}
+
+// Clicks on phone, email, WhatsApp and booking buttons
+document.addEventListener('click', (e) => {
+    const link = e.target.closest('a');
+    if (!link) return;
+    const href = link.getAttribute('href') || '';
+    if (href.startsWith('tel:')) trackEvent('contact_click', { method: 'phone' });
+    else if (href.startsWith('mailto:')) trackEvent('contact_click', { method: 'email' });
+    else if (link.id === 'whatsappFloat') trackEvent('contact_click', { method: 'whatsapp_button' });
+    else if (link.dataset.track) trackEvent('cta_click', { location: link.dataset.track });
+});
