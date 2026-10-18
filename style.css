@@ -4754,3 +4754,288 @@ a.detail-value-secondary {
     margin: 0 0.25rem;
     color: var(--color-muted);
 }
+
+/* ==========================================================================
+   Lightbox zoom
+   ========================================================================== */
+.lightbox {
+    overflow: hidden;
+}
+
+.lightbox-img {
+    cursor: zoom-in;
+    touch-action: none;           /* pinch & drag are handled by the zoom code */
+    user-select: none;
+    -webkit-user-select: none;
+    transition: transform 0.25s ease, opacity var(--transition-normal);
+    will-change: transform;
+}
+
+.lightbox.is-zoomed .lightbox-img {
+    cursor: grab;
+    box-shadow: none;
+}
+
+.lightbox-img.is-dragging {
+    transition: opacity var(--transition-normal);
+}
+
+.lightbox.is-zoomed .lightbox-img.is-dragging {
+    cursor: grabbing;
+}
+
+.lightbox.is-zoomed .lightbox-content {
+    z-index: 1005;
+}
+
+.lightbox.is-zoomed .lightbox-caption-wrap {
+    visibility: hidden;
+}
+
+.lightbox-zoom {
+    top: 2rem;
+    right: calc(2rem + 62px);
+}
+
+.lightbox-zoom[aria-pressed="true"] .zoom-plus {
+    display: none;   /* magnifier shows "−" while zoomed */
+}
+
+.lightbox-zoom[aria-pressed="true"] {
+    border-color: var(--color-accent);
+    color: var(--color-accent);
+}
+
+.lightbox-hint {
+    margin-top: 0.6rem;
+    font-size: 0.72rem;
+    letter-spacing: 0.05em;
+    color: var(--color-muted);
+}
+
+@media (max-width: 768px) {
+    .lightbox-zoom {
+        top: 1.5rem;
+        right: calc(1.5rem + 52px);
+    }
+}
+
+.carousel-admin-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+}
+
+.carousel-admin-head h4 {
+    margin-bottom: 0;
+}
+
+.carousel-admin-add {
+    padding: 0.45rem 0.9rem;
+    font-size: 0.72rem;
+    cursor: pointer;
+}
+
+.carousel-admin-add.is-busy {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+/* About: Instagram / Facebook links with icons */
+.about-social {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem 1rem;
+}
+
+.about-social-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+}
+
+.about-social .about-social-links a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--color-border-focus);
+    border-radius: var(--radius-full);
+    color: var(--color-accent);
+    font-size: 0.85rem;
+    text-decoration: none;
+    transition: background-color var(--transition-fast), color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.about-social .about-social-links a:hover,
+.about-social .about-social-links a:focus-visible {
+    background-color: var(--color-accent);
+    border-color: var(--color-accent);
+    color: #fffdf9;
+}
+
+.about-social-links svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+}
+
+/* ==========================================================================
+   Hero interactive touches
+   ========================================================================== */
+/* Soft gold light following the pointer (desktop). Moved with transform only. */
+.hero-glow {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 3;
+    width: 760px;
+    height: 760px;
+    margin: -380px 0 0 -380px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(197, 168, 128, 0.16) 0%, rgba(197, 168, 128, 0.05) 40%, transparent 70%);
+    opacity: 0;
+    transform: translate3d(var(--glow-x, 70vw), var(--glow-y, 40vh), 0);
+    transition: opacity 0.8s ease;
+    pointer-events: none;
+    will-change: transform;
+}
+
+.hero.is-pointing .hero-glow {
+    opacity: 1;
+}
+
+/* A few drifting gold specks, like out-of-focus fairy lights */
+.hero-lights {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.hero-lights span {
+    position: absolute;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: rgba(240, 214, 168, 0.9);
+    box-shadow: 0 0 10px 3px rgba(197, 168, 128, 0.45);
+    opacity: 0;
+    animation: heroSpeck 18s ease-in-out infinite;
+    will-change: transform, opacity;
+}
+
+.hero-lights span:nth-child(1) { left: 8%;  top: 72%; animation-delay: 0s;   animation-duration: 19s; }
+.hero-lights span:nth-child(2) { left: 22%; top: 30%; animation-delay: -4s;  animation-duration: 23s; width: 3px; height: 3px; }
+.hero-lights span:nth-child(3) { left: 35%; top: 82%; animation-delay: -9s;  animation-duration: 17s; }
+.hero-lights span:nth-child(4) { left: 48%; top: 18%; animation-delay: -2s;  animation-duration: 25s; width: 4px; height: 4px; }
+.hero-lights span:nth-child(5) { left: 58%; top: 64%; animation-delay: -12s; animation-duration: 21s; width: 3px; height: 3px; }
+.hero-lights span:nth-child(6) { left: 66%; top: 10%; animation-delay: -6s;  animation-duration: 18s; }
+.hero-lights span:nth-child(7) { left: 78%; top: 86%; animation-delay: -15s; animation-duration: 22s; width: 4px; height: 4px; }
+.hero-lights span:nth-child(8) { left: 90%; top: 40%; animation-delay: -8s;  animation-duration: 20s; width: 3px; height: 3px; }
+.hero-lights span:nth-child(9) { left: 15%; top: 50%; animation-delay: -11s; animation-duration: 24s; width: 4px; height: 4px; }
+
+@keyframes heroSpeck {
+    0%   { opacity: 0;   transform: translate3d(0, 0, 0); }
+    20%  { opacity: 0.8; }
+    50%  { opacity: 0.4; transform: translate3d(18px, -40px, 0); }
+    80%  { opacity: 0.75; }
+    100% { opacity: 0;   transform: translate3d(-12px, -90px, 0); }
+}
+
+@media (max-width: 576px) {
+    .hero-lights span:nth-child(n+6) {
+        display: none;
+    }
+}
+
+/* Photo frame tilts gently toward the pointer (desktop) */
+@media (min-width: 993px) {
+    .hero-frame:not([hidden]) {
+        transform: perspective(1100px) rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg));
+        transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+        will-change: transform;
+    }
+}
+
+/* Album label on the photo */
+.hero-frame-caption {
+    position: absolute;
+    top: 0.85rem;
+    left: 0.85rem;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    padding: 0.45rem 0.85rem;
+    border: 1px solid rgba(197, 168, 128, 0.45);
+    border-radius: var(--radius-full);
+    background: rgba(10, 11, 13, 0.62);
+    color: var(--color-primary);
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    transition: background-color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.hero-caption-name {
+    font-weight: 500;
+}
+
+.hero-caption-link {
+    color: var(--color-accent);
+    opacity: 0.9;
+}
+
+.hero-frame-caption:hover,
+.hero-frame-caption:focus-visible {
+    background: rgba(10, 11, 13, 0.85);
+    border-color: var(--color-accent);
+}
+
+/* Progress line on the active dot (fills until the next photo) */
+.hero-dot::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 18px;
+    height: 7px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.85);
+    transform: translate(-50%, -50%) scaleX(0);
+    transform-origin: left center;
+    opacity: 0;
+}
+
+.hero-dot.is-active::after {
+    opacity: 0.55;
+    animation: heroDotProgress 6s linear forwards;
+}
+
+.hero-dots.is-paused .hero-dot.is-active::after {
+    animation-play-state: paused;
+}
+
+@keyframes heroDotProgress {
+    from { transform: translate(-50%, -50%) scaleX(0); }
+    to   { transform: translate(-50%, -50%) scaleX(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .hero-lights,
+    .hero-glow {
+        display: none;
+    }
+    .hero-dot.is-active::after {
+        animation: none;
+        opacity: 0;
+    }
+    .hero-frame:not([hidden]) {
+        transform: none;
+    }
+}

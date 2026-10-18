@@ -704,7 +704,9 @@ function openLightbox(index) {
     const categoryLabel = photo.categoryLabel || (album ? album.name : 'Fine Art');
 
     // Set content
+    resetLightboxZoom();
     lightboxImg.src = photo.url;
+    lightboxImg.dataset.zoomSrc = photo.zoomUrl || '';
     lightboxImg.alt = photo.altText;
     lightboxTitle.textContent = photo.title;
     lightboxCategory.textContent = categoryLabel;
@@ -717,6 +719,7 @@ function openLightbox(index) {
 
 
 function closeLightbox() {
+    resetLightboxZoom();
     lightbox.classList.remove('active');
     lightbox.setAttribute('aria-hidden', 'true');
     document.body.style.overflow = '';
@@ -1105,26 +1108,54 @@ const photoAltInput = document.getElementById('photoAlt');
 let loadedFile = null; // stores the actual File object for multipart upload
 
 function renderAdminPhotoDropdowns() {
-    // Clear
+    const current = photoAlbumDropdown.value;
     photoAlbumDropdown.innerHTML = '';
     photoFilterAlbumDropdown.innerHTML = '<option value="all">Show All Albums</option>';
-    
-    state.albums.forEach(album => {
-        const opt1 = document.createElement('option');
-        opt1.value = album.id;
-        opt1.textContent = album.name;
-        photoAlbumDropdown.appendChild(opt1);
-        
-        const opt2 = document.createElement('option');
-        opt2.value = album.id;
-        opt2.textContent = album.name;
-        photoFilterAlbumDropdown.appendChild(opt2);
-    });
 
-    // Handle filter dropdown change
-    photoFilterAlbumDropdown.addEventListener('change', () => {
-        renderAdminPhotosTable();
-    });
+    // Portfolio categories (Photo_carousel folders) work as albums: photos go to the carousel
+    const folders = carouselState.folderCategories;
+    if (folders.length) {
+        const group = document.createElement('optgroup');
+        group.label = 'Portfolio albums';
+        folders.forEach(c => {
+            const opt = document.createElement('option');
+            opt.value = 'folder:' + (c.photos[0]?.folder || c.name);
+            opt.textContent = `${c.name} (${c.photos.length})`;
+            group.appendChild(opt);
+        });
+        photoAlbumDropdown.appendChild(group);
+    }
+
+    if (state.albums.length) {
+        const group = document.createElement('optgroup');
+        group.label = 'Other albums';
+        state.albums.forEach(album => {
+            const opt1 = document.createElement('option');
+            opt1.value = album.id;
+            opt1.textContent = album.name;
+            group.appendChild(opt1);
+
+            const opt2 = document.createElement('option');
+            opt2.value = album.id;
+            opt2.textContent = album.name;
+            photoFilterAlbumDropdown.appendChild(opt2);
+        });
+        photoAlbumDropdown.appendChild(group);
+    }
+    if ([...photoAlbumDropdown.options].some(o => o.value === current)) photoAlbumDropdown.value = current;
+    updatePhotoFormForAlbum();
+
+    photoFilterAlbumDropdown.onchange = () => renderAdminPhotosTable();
+    photoAlbumDropdown.onchange = updatePhotoFormForAlbum;
+}
+
+// Portfolio albums only need the photo file; title / alt text / URL apply to other albums
+function updatePhotoFormForAlbum() {
+    const isFolder = photoAlbumDropdown.value.startsWith('folder:');
+    [photoTitleInput, photoAltInput].forEach(el => { el.required = !isFolder; });
+    photoTitleInput.placeholder = isFolder ? 'Optional for portfolio albums' : 'e.g. Silhouette at Sunset';
+    photoAltInput.placeholder = isFolder ? 'Optional for portfolio albums' : 'Describe the image content for screen readers...';
+    photoUrlInput.disabled = isFolder;
 }
 
 function renderAdminPhotosTable() {
@@ -1227,6 +1258,22 @@ if (addPhotoForm) {
         const title    = photoTitleInput.value.trim();
         const aspect   = photoAspectInput.value;
         const altText  = photoAltInput.value.trim();
+
+        // Portfolio album → upload into the Photo_carousel category folder
+        if (albumId.startsWith('folder:')) {
+            if (!loadedFile) { showToast('Please choose a photo file to upload.', true); return; }
+            const category = albumId.slice('folder:'.length);
+            const ok = await uploadToCarousel(category, [loadedFile]);
+            if (ok) {
+                addPhotoForm.reset();
+                loadedFile = null;
+                uploadPreview.style.display = 'none';
+                uploadPreview.src = '';
+                updatePhotoFormForAlbum();
+            }
+            return;
+        }
+        if (!albumId) { showToast('Please create an album first.', true); return; }
 
         let submitData;
 
@@ -1885,28 +1932,7 @@ function setupGlobalEventListeners() {
         }
     });
 
-    // Lightbox Mobile Touch Swipe Gestures
-    let touchstartX = 0;
-    let touchendX = 0;
-
-    lightbox.addEventListener('touchstart', (e) => {
-        touchstartX = e.changedTouches[0].screenX;
-    }, { passive: true });
-
-    lightbox.addEventListener('touchend', (e) => {
-        touchendX = e.changedTouches[0].screenX;
-        handleSwipeGesture();
-    }, { passive: true });
-
-    function handleSwipeGesture() {
-        // Detect swipe threshold 50px
-        if (touchendX < touchstartX - 50) {
-            showNextPhoto(); // Swiped left -> Next
-        }
-        if (touchendX > touchstartX + 50) {
-            showPrevPhoto(); // Swiped right -> Prev
-        }
-    }
+    // Lightbox swipe gestures: see bindLightboxSwipe() (zoom-aware)
 }
 
 // ==========================================================================
@@ -2639,6 +2665,7 @@ function renderCarouselTrack() {
         item.addEventListener('click', () => {
             state.filteredPhotos = photos.map((p, i) => ({
                 url: p.large,
+                zoomUrl: p.folder && p.file ? `Photo_carousel/${encodeURIComponent(p.folder)}/${encodeURIComponent(p.file)}` : '',
                 altText: p.alt,
                 title: p.category,
                 categoryLabel: `${i + 1} / ${photos.length}`
@@ -2714,7 +2741,8 @@ let heroSlideKey = '';
 
 function pickHeroSlides() {
     // Round-robin across categories so every category is represented
-    return interleave(carouselState.categories.map(c => c.photos)).slice(0, HERO_SLIDE_LIMIT);
+    return interleave(carouselState.categories.map(c => c.photos.map(p => ({ ...p, categoryName: c.name, categorySlug: c.slug }))))
+        .slice(0, HERO_SLIDE_LIMIT);
 }
 
 function heroSrcset(p) {
@@ -2740,7 +2768,8 @@ function buildHeroSlider() {
         bg.insertAdjacentHTML('beforeend',
             `<img class="hero-slide" data-src="${escapeHtml(p.thumb || p.large)}" alt="" decoding="async">`);
         frame.insertAdjacentHTML('beforeend',
-            `<img class="hero-frame-slide" data-src="${escapeHtml(p.medium || p.large)}" data-srcset="${escapeHtml(heroSrcset(p))}"
+            `<img class="hero-frame-slide" data-category="${escapeHtml(p.categoryName || '')}" data-slug="${escapeHtml(p.categorySlug || '')}"
+                  data-src="${escapeHtml(p.medium || p.large)}" data-srcset="${escapeHtml(heroSrcset(p))}"
                   sizes="(min-width: 993px) 560px, 92vw" alt="${escapeHtml(p.alt || '')}" decoding="async">`);
     });
 
@@ -2775,10 +2804,31 @@ function showHeroSlide(i) {
     // Fetch the following photo now so it is ready for the next crossfade
     const count = document.querySelectorAll('.hero-slide').length;
     if (count > 1) loadHeroSlide((i + 1) % count);
+    updateHeroCaption();
 }
+
+// Album label on the hero photo ("Birthdays · View album →")
+function updateHeroCaption() {
+    const active = document.querySelectorAll('.hero-frame-slide')[heroIndex];
+    const caption = document.getElementById('heroCaption');
+    if (!active || !caption) return;
+    const name = active.dataset.category || '';
+    caption.hidden = !name;
+    if (!name) return;
+    document.getElementById('heroCaptionName').textContent = name;
+    caption.dataset.slug = active.dataset.slug || '';
+    caption.setAttribute('aria-label', `View the ${name} album`);
+}
+
+let heroPaused = false;
 
 function restartHeroTimer() {
     clearInterval(heroTimer);
+    const dots = document.getElementById('heroDots');
+    if (dots) dots.classList.toggle('is-paused', heroPaused);
+    if (heroPaused) return;
+    const activeDot = dots && dots.querySelector('.hero-dot.is-active');
+    if (activeDot) { activeDot.classList.remove('is-active'); void activeDot.offsetWidth; activeDot.classList.add('is-active'); }
     const count = document.querySelectorAll('.hero-slide').length;
     // A slow crossfade is fine with "reduce motion" on; only the zoom effect is switched off (CSS)
     if (count < 2 || document.hidden) return;
@@ -2790,9 +2840,11 @@ function restartHeroTimer() {
     const box = document.getElementById('lightbox');
     if (!box) return;
     let startX = null;
-    box.addEventListener('touchstart', (e) => { startX = e.touches[0].clientX; }, { passive: true });
+    box.addEventListener('touchstart', (e) => {
+        startX = (e.touches.length === 1 && lightboxZoom.scale === 1) ? e.touches[0].clientX : null;
+    }, { passive: true });
     box.addEventListener('touchend', (e) => {
-        if (startX === null) return;
+        if (startX === null || lightboxZoom.scale !== 1 || lightboxZoom.justPinched) { startX = null; return; }
         const dx = e.changedTouches[0].clientX - startX;
         if (Math.abs(dx) > 50) (dx < 0 ? showNextPhoto : showPrevPhoto)();
         startX = null;
@@ -2824,6 +2876,7 @@ if (adminShowPass) {
 // Admin: Portfolio carousel folders — upload into a category, remove photos
 // ==========================================================================
 function renderCarouselAdmin() {
+    if (typeof photoAlbumDropdown !== 'undefined' && photoAlbumDropdown) renderAdminPhotoDropdowns();
     const list = document.getElementById('carouselAdminList');
     const select = document.getElementById('carouselCategorySelect');
     if (!list || !select) return;
@@ -2832,7 +2885,7 @@ function renderCarouselAdmin() {
     const current = select.value;
     select.innerHTML = cats.length
         ? cats.map(c => `<option value="${escapeHtml(c.photos[0]?.folder || c.name)}">${escapeHtml(c.name)} (${c.photos.length})</option>`).join('')
-        : '<option value="">No categories yet — type a new one</option>';
+        : '<option value="">No albums yet — type a new one</option>';
     if ([...select.options].some(o => o.value === current)) select.value = current;
 
     if (!cats.length) {
@@ -2841,7 +2894,13 @@ function renderCarouselAdmin() {
     }
     list.innerHTML = cats.map(c => `
         <div class="carousel-admin-category">
-            <h4>${escapeHtml(c.name)} <span>${c.photos.length} photo${c.photos.length === 1 ? '' : 's'}</span></h4>
+            <div class="carousel-admin-head">
+                <h4>${escapeHtml(c.name)} <span>${c.photos.length} photo${c.photos.length === 1 ? '' : 's'}</span></h4>
+                <label class="admin-btn btn-outline carousel-admin-add">
+                    + Add photos
+                    <input type="file" accept="image/jpeg,image/png,image/webp" multiple hidden data-folder="${escapeHtml(c.photos[0]?.folder || c.name)}">
+                </label>
+            </div>
             <div class="carousel-admin-grid">
                 ${c.photos.map(p => `
                     <figure class="carousel-admin-item">
@@ -2852,6 +2911,15 @@ function renderCarouselAdmin() {
                     </figure>`).join('')}
             </div>
         </div>`).join('');
+
+    list.querySelectorAll('.carousel-admin-add input').forEach(input => {
+        input.addEventListener('change', async () => {
+            const files = [...input.files];
+            if (!files.length) return;
+            input.closest('label').classList.add('is-busy');
+            await uploadToCarousel(input.dataset.folder, files);
+        });
+    });
 
     list.querySelectorAll('.carousel-admin-remove').forEach(btn => {
         btn.addEventListener('click', async () => {
@@ -2870,40 +2938,246 @@ function renderCarouselAdmin() {
     });
 }
 
+// Upload photos into a portfolio album (Photo_carousel category). Returns true if all succeeded.
+async function uploadToCarousel(category, files, statusEl = document.getElementById('carouselUploadStatus')) {
+    let done = 0, failed = 0, lastError = '';
+    for (const file of files) {
+        if (statusEl) statusEl.textContent = `Uploading ${done + failed + 1} of ${files.length} to ${category.replace(/_/g, ' ')}…`;
+        try {
+            const fd = new FormData();
+            fd.append('category', category);
+            fd.append('file', await compressImage(file));
+            const res = await db.uploadCarouselPhoto(fd);
+            if (!res || !res.success) throw new Error(res?.error || 'Upload failed');
+            done++;
+        } catch (err) {
+            failed++;
+            lastError = err.message;
+            console.warn('Portfolio upload failed:', file.name, err);
+        }
+    }
+    const name = category.replace(/_/g, ' ');
+    const message = failed
+        ? `${done} uploaded, ${failed} failed${lastError ? ` (${lastError})` : ''}.`
+        : `${done} photo${done === 1 ? '' : 's'} added to ${name}.`;
+    if (statusEl) statusEl.textContent = message;
+    showToast(message, failed > 0);
+    await loadPhotoCarousel();
+    return failed === 0;
+}
+
 const carouselUploadForm = document.getElementById('carouselUploadForm');
 if (carouselUploadForm) {
     carouselUploadForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const status = document.getElementById('carouselUploadStatus');
         const button = document.getElementById('carouselUploadBtn');
         const newName = document.getElementById('carouselNewCategory').value.trim();
         const category = newName || document.getElementById('carouselCategorySelect').value;
         const files = [...document.getElementById('carouselFiles').files];
-        if (!category) { showToast('Choose a category or type a new one.', true); return; }
+        if (!category) { showToast('Choose an album or type a new one.', true); return; }
         if (!files.length) { showToast('Choose one or more photos.', true); return; }
-
         button.disabled = true;
-        let done = 0, failed = 0;
-        for (const file of files) {
-            status.textContent = `Uploading ${done + failed + 1} of ${files.length}…`;
-            try {
-                const fd = new FormData();
-                fd.append('category', category);
-                fd.append('file', await compressImage(file));
-                const res = await db.uploadCarouselPhoto(fd);
-                if (!res || !res.success) throw new Error(res?.error || 'Upload failed');
-                done++;
-            } catch (err) {
-                failed++;
-                console.warn('Carousel upload failed:', file.name, err);
-            }
-        }
+        await uploadToCarousel(category, files);
         button.disabled = false;
-        status.textContent = failed
-            ? `${done} uploaded, ${failed} failed. Please try the failed ones again.`
-            : `${done} photo${done === 1 ? '' : 's'} uploaded to ${category}.`;
         carouselUploadForm.reset();
-        await loadPhotoCarousel();
-        showToast(failed ? 'Some photos could not be uploaded.' : 'Photos added to the portfolio.', failed > 0);
     });
 }
+
+// ==========================================================================
+// Lightbox zoom
+// Desktop: click to zoom at that spot (click again to zoom out), mouse wheel,
+// drag to look around. Phones: pinch or double-tap, drag to look around.
+// Keyboard: + / - / 0. While zoomed, the full-quality photo is swapped in.
+// ==========================================================================
+const LIGHTBOX_MAX_ZOOM = 4;
+const LIGHTBOX_CLICK_ZOOM = 2.5;
+const lightboxZoom = { scale: 1, x: 0, y: 0, pointers: new Map(), pinchDist: 0, drag: null, moved: false, lastTap: 0, justPinched: false };
+const lightboxZoomBtn = document.getElementById('lightboxZoom');
+const lightboxHint = document.getElementById('lightboxHint');
+if (lightboxHint && window.matchMedia('(pointer: coarse)').matches) lightboxHint.textContent = 'Pinch or double-tap to zoom';
+
+function applyLightboxZoom() {
+    const z = lightboxZoom;
+    z.scale = Math.min(LIGHTBOX_MAX_ZOOM, Math.max(1, z.scale));
+    if (z.scale === 1) { z.x = 0; z.y = 0; }
+    // Keep the photo covering its frame: no panning past its edges
+    const maxX = (lightboxImg.offsetWidth * (z.scale - 1)) / 2;
+    const maxY = (lightboxImg.offsetHeight * (z.scale - 1)) / 2;
+    z.x = Math.min(maxX, Math.max(-maxX, z.x));
+    z.y = Math.min(maxY, Math.max(-maxY, z.y));
+    lightboxImg.style.transform = z.scale === 1 ? '' : `translate(${z.x}px, ${z.y}px) scale(${z.scale})`;
+    const zoomed = z.scale > 1;
+    lightbox.classList.toggle('is-zoomed', zoomed);
+    if (lightboxZoomBtn) {
+        lightboxZoomBtn.setAttribute('aria-pressed', String(zoomed));
+        lightboxZoomBtn.setAttribute('aria-label', zoomed ? 'Zoom out' : 'Zoom in');
+    }
+    // Sharper photo while zoomed in
+    if (zoomed && lightboxImg.dataset.zoomSrc && lightboxImg.getAttribute('src') !== lightboxImg.dataset.zoomSrc) {
+        const hiRes = new Image();
+        const target = lightboxImg.dataset.zoomSrc;
+        hiRes.onload = () => { if (lightboxImg.dataset.zoomSrc === target) lightboxImg.src = target; };
+        hiRes.src = target;
+    }
+}
+
+// Zoom to newScale keeping the point under (clientX, clientY) in place
+function zoomLightboxAt(newScale, clientX, clientY) {
+    const z = lightboxZoom;
+    const rect = lightboxImg.getBoundingClientRect();
+    const cx = clientX ?? rect.left + rect.width / 2;
+    const cy = clientY ?? rect.top + rect.height / 2;
+    const target = Math.min(LIGHTBOX_MAX_ZOOM, Math.max(1, newScale));
+    const px = cx - (rect.left + rect.width / 2);
+    const py = cy - (rect.top + rect.height / 2);
+    z.x += px * (1 - target / z.scale);
+    z.y += py * (1 - target / z.scale);
+    z.scale = target;
+    applyLightboxZoom();
+}
+
+function resetLightboxZoom() {
+    Object.assign(lightboxZoom, { scale: 1, x: 0, y: 0, drag: null, moved: false });
+    lightboxZoom.pointers.clear();
+    lightboxImg.classList.remove('is-dragging');
+    applyLightboxZoom();
+}
+
+function toggleLightboxZoom(clientX, clientY) {
+    if (lightboxZoom.scale > 1) resetLightboxZoom();
+    else zoomLightboxAt(LIGHTBOX_CLICK_ZOOM, clientX, clientY);
+}
+
+(function bindLightboxZoom() {
+    if (!lightboxImg) return;
+    const z = lightboxZoom;
+    const dist = () => { const [a, b] = [...z.pointers.values()]; return Math.hypot(a.x - b.x, a.y - b.y); };
+    const mid = () => { const [a, b] = [...z.pointers.values()]; return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }; };
+
+    lightboxImg.addEventListener('dragstart', e => e.preventDefault());
+    lightboxImg.addEventListener('pointerdown', (e) => {
+        lightboxImg.setPointerCapture(e.pointerId);
+        z.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        if (z.pointers.size === 2) {
+            z.pinchDist = dist();
+            z.drag = null;
+            z.justPinched = true;
+        } else if (z.pointers.size === 1) {
+            z.drag = { x: e.clientX, y: e.clientY, ox: z.x, oy: z.y };
+            z.moved = false;
+        }
+        lightboxImg.classList.add('is-dragging');
+    });
+    lightboxImg.addEventListener('pointermove', (e) => {
+        if (!z.pointers.has(e.pointerId)) return;
+        z.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        if (z.pointers.size === 2) {
+            const d = dist();
+            const m = mid();
+            if (z.pinchDist) zoomLightboxAt(z.scale * (d / z.pinchDist), m.x, m.y);
+            z.pinchDist = d;
+        } else if (z.drag) {
+            const dx = e.clientX - z.drag.x, dy = e.clientY - z.drag.y;
+            if (Math.abs(dx) + Math.abs(dy) > 6) z.moved = true;
+            if (z.scale > 1) {
+                z.x = z.drag.ox + dx;
+                z.y = z.drag.oy + dy;
+                applyLightboxZoom();
+            }
+        }
+    });
+    const end = (e) => {
+        const wasTap = z.pointers.size === 1 && !z.moved && !z.justPinched;
+        z.pointers.delete(e.pointerId);
+        if (z.pointers.size === 0) {
+            lightboxImg.classList.remove('is-dragging');
+            z.drag = null;
+            if (wasTap && e.type === 'pointerup') {
+                if (e.pointerType === 'mouse') {
+                    toggleLightboxZoom(e.clientX, e.clientY);
+                } else {
+                    // Touch: double-tap to zoom (a single tap keeps swiping free)
+                    const now = Date.now();
+                    if (now - z.lastTap < 320) { toggleLightboxZoom(e.clientX, e.clientY); z.lastTap = 0; }
+                    else z.lastTap = now;
+                }
+            }
+            setTimeout(() => { z.justPinched = false; }, 50);
+        } else if (z.pointers.size === 1) {
+            // Pinch ended with one finger still down: continue as a drag from here
+            const [p] = [...z.pointers.values()];
+            z.drag = { x: p.x, y: p.y, ox: z.x, oy: z.y };
+            z.pinchDist = 0;
+        }
+    };
+    lightboxImg.addEventListener('pointerup', end);
+    lightboxImg.addEventListener('pointercancel', end);
+
+    // Mouse wheel / trackpad
+    lightbox.addEventListener('wheel', (e) => {
+        if (!lightbox.classList.contains('active')) return;
+        e.preventDefault();
+        zoomLightboxAt(z.scale * (e.deltaY < 0 ? 1.2 : 1 / 1.2), e.clientX, e.clientY);
+    }, { passive: false });
+
+    if (lightboxZoomBtn) lightboxZoomBtn.addEventListener('click', () => toggleLightboxZoom());
+
+    document.addEventListener('keydown', (e) => {
+        if (!lightbox.classList.contains('active')) return;
+        if (e.key === '+' || e.key === '=') zoomLightboxAt(z.scale * 1.4);
+        if (e.key === '-' || e.key === '_') zoomLightboxAt(z.scale / 1.4);
+        if (e.key === '0') resetLightboxZoom();
+    });
+    window.addEventListener('resize', () => { if (z.scale > 1) applyLightboxZoom(); });
+})();
+
+// ==========================================================================
+// Hero: light interactive touches (no libraries, transform/opacity only)
+//  - soft gold glow follows the pointer, photo frame tilts slightly (desktop)
+//  - album label on the photo opens that album in the Portfolio
+//  - rotation pauses while the pointer is over the photo
+// ==========================================================================
+(function heroInteractions() {
+    const hero = document.getElementById('home');
+    const frame = document.getElementById('heroFrame');
+    const caption = document.getElementById('heroCaption');
+    if (!hero || !frame) return;
+
+    caption?.addEventListener('click', () => {
+        const slug = caption.dataset.slug;
+        if (slug && carouselState.categories.some(c => c.slug === slug)) {
+            carouselState.active = slug;
+            refreshPortfolioCarousel();
+        }
+        trackEvent('hero_album_click', { album: slug || '' });
+    });
+
+    frame.addEventListener('pointerenter', () => { heroPaused = true; restartHeroTimer(); });
+    frame.addEventListener('pointerleave', () => { heroPaused = false; restartHeroTimer(); });
+
+    const fancyPointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches
+        && !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!fancyPointer) return;
+
+    let frameRequest = null, px = 0.5, py = 0.5;
+    hero.addEventListener('pointermove', (e) => {
+        const r = hero.getBoundingClientRect();
+        px = (e.clientX - r.left) / r.width;
+        py = (e.clientY - r.top) / r.height;
+        if (frameRequest) return;
+        frameRequest = requestAnimationFrame(() => {
+            frameRequest = null;
+            const r2 = hero.getBoundingClientRect();
+            hero.style.setProperty('--glow-x', `${Math.round(px * r2.width)}px`);
+            hero.style.setProperty('--glow-y', `${Math.round(py * r2.height)}px`);
+            hero.style.setProperty('--tilt-x', `${((0.5 - py) * 5).toFixed(2)}deg`);
+            hero.style.setProperty('--tilt-y', `${((px - 0.5) * 7).toFixed(2)}deg`);
+            hero.classList.add('is-pointing');
+        });
+    });
+    hero.addEventListener('pointerleave', () => {
+        hero.classList.remove('is-pointing');
+        hero.style.setProperty('--tilt-x', '0deg');
+        hero.style.setProperty('--tilt-y', '0deg');
+    });
+})();
