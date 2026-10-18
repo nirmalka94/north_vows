@@ -18,8 +18,8 @@ header('Cache-Control: public, max-age=300');
 const CAROUSEL_DIR    = __DIR__ . '/../Photo_carousel';
 const CAROUSEL_URL    = 'Photo_carousel';
 const WEB_DIR_NAME    = '_web';
-const SIZES           = ['large' => 1600, 'thumb' => 640];
-const JPEG_QUALITY    = 82;
+const SIZES           = ['large' => 1600, 'medium' => 1000, 'thumb' => 640];
+const JPEG_QUALITY    = 78;
 const IMAGE_EXTENSIONS = ['jpg', 'jpeg', 'png', 'webp'];
 
 @ini_set('memory_limit', '256M');
@@ -109,6 +109,7 @@ if (is_dir(CAROUSEL_DIR)) {
             $size     = @getimagesize(CAROUSEL_DIR . "/$folder/$file");
             $photos[] = [
                 'large'  => webCopy($folder, $file, 'large', SIZES['large']) ?? $original,
+                'medium' => webCopy($folder, $file, 'medium', SIZES['medium']) ?? $original,
                 'thumb'  => webCopy($folder, $file, 'thumb', SIZES['thumb']) ?? $original,
                 'width'  => $size[0] ?? null,
                 'height' => $size[1] ?? null,

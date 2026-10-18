@@ -4598,3 +4598,26 @@ a.detail-value-secondary {
     border-color: rgba(31, 28, 24, 0.08);
     outline-color: rgba(138, 106, 60, 0.45);
 }
+
+/* Speed: the hero photo is the page's main image, so it appears straight
+   away (no fade-in), and the photo slides start hidden until loaded. */
+.hero-frame:not([hidden]) {
+    animation: none;
+}
+
+.hero-frame-slide:not([src]),
+.hero-slide:not([src]) {
+    visibility: hidden;
+}
+
+/* The small logo also fits inside the round Instagram avatar */
+.instagram-avatar[src$="logo-sm.png"] {
+    object-fit: contain;
+    background-color: var(--bg-dark);
+    padding: 6px;
+}
+
+/* Carousel tiles keep their shape while the photo loads */
+.carousel-item img:not([src]) {
+    visibility: hidden;
+}

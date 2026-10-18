@@ -33,11 +33,14 @@
     <!-- Fonts (loaded in parallel with the stylesheet) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@200;300;400;500;600&display=swap">
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@200;300;400;500;600&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@200;300;400;500;600&display=swap"></noscript>
+    <!-- First hero photo: fetched right away so it can appear before any script runs -->
+    <link rel="preload" as="image" href="Assets/hero-first.jpg" fetchpriority="high">
 
     <!-- Stylesheet. Bump ?v= on every deploy so browsers fetch the new file
          (Hostinger tells browsers to cache CSS/JS for 7 days). -->
-    <link rel="stylesheet" href="style.css?v=20261019c">
+    <link rel="stylesheet" href="style.css?v=20261019d">
     <link rel="icon" type="image/png" href="Assets/logo.png">
 
     <!-- Google Business Schema Markup (JSON-LD) -->
@@ -97,7 +100,7 @@
     <header class="navbar" id="navbar">
         <div class="container">
             <a href="#home" class="logo" aria-label="North Vows Home">
-                <img src="Assets/logo.png" alt="North Vows Logo" onerror="this.onerror=null; this.style.marginRight='0';">
+                <img src="Assets/logo-sm.png" alt="North Vows Logo" width="51" height="38" onerror="this.onerror=null; this.style.marginRight='0';">
                 <span class="logo-text">NORTH VOWS PHOTOGRAPHY</span>
             </a>
             
@@ -134,14 +137,12 @@
     <!-- ==========================================================================
          Hero Section
          ========================================================================== -->
-    <section id="home" class="hero">
+    <section id="home" class="hero has-slides">
         <div class="hero-bg">
-            <img alt="" class="hero-bg-img" id="heroBgImg" fetchpriority="high" decoding="async">
-            <script>
-                // Show the last-known hero image straight away instead of waiting for the API
-                try { var h = localStorage.getItem('nv_hero'); if (h) document.getElementById('heroBgImg').src = h; } catch (e) {}
-            </script>
-            <div class="hero-slides" id="heroSlides" aria-hidden="true"></div>
+            <img alt="" class="hero-bg-img" id="heroBgImg" decoding="async">
+            <div class="hero-slides" id="heroSlides" aria-hidden="true">
+                <img class="hero-slide is-active" src="Assets/hero-first.jpg" alt="" decoding="async">
+            </div>
         </div>
         <div class="container">
             <div class="hero-content">
@@ -157,8 +158,10 @@
                 </a>
             </div>
             <!-- Framed photo slider (desktop); filled from Photo_carousel by JS -->
-            <div class="hero-frame" id="heroFrame" hidden>
-                <div class="hero-frame-slides" id="heroFrameSlides"></div>
+            <div class="hero-frame" id="heroFrame">
+                <div class="hero-frame-slides" id="heroFrameSlides">
+                    <img class="hero-frame-slide is-active" src="Assets/hero-first.jpg" alt="Birthday session in a Kitchener park by North Vows Photography" width="720" height="960" fetchpriority="high" data-source="Photo_carousel/_web/large/Birthdays/DSC02760.jpg.jpg">
+                </div>
                 <div class="hero-dots" id="heroDots" role="group" aria-label="Choose hero photo"></div>
             </div>
         </div>
@@ -177,7 +180,7 @@
         <div class="container">
             <div class="about-intro-inner">
                 <figure class="about-portrait">
-                    <img src="Assets/Photographer_Main.jpeg" alt="Abin, founder and lead photographer at North Vows Photography" loading="lazy" width="1152" height="1600">
+                    <img src="Assets/abin-portrait.jpg" alt="Abin, founder and lead photographer at North Vows Photography" loading="lazy" width="720" height="1000">
                 </figure>
                 <div class="about-copy">
                     <span class="section-subtitle" id="aboutSubtitle">The Eye Behind The Lens</span>
@@ -246,7 +249,7 @@
         <div class="container">
             <div class="instagram-header">
                 <div class="instagram-profile">
-                    <img src="Assets/logo.png" alt="North Vows Instagram profile" class="instagram-avatar" id="instaAvatar">
+                    <img src="Assets/logo-sm.png" alt="North Vows Instagram profile" class="instagram-avatar" id="instaAvatar" loading="lazy" width="52" height="52">
                     <div class="instagram-meta">
                         <span class="handle" id="instaHandle">@thenorthvows</span>
                         <span class="subtitle">Latest works &amp; updates</span>
@@ -693,7 +696,7 @@
         <div class="container footer-grid">
             <div class="footer-brand">
                 <a href="#home" class="logo" aria-label="North Vows Home">
-                    <img src="Assets/logo.png" alt="" width="52" height="39">
+                    <img src="Assets/logo-sm.png" alt="" width="52" height="39" loading="lazy">
                     <span class="logo-text">North Vows</span>
                 </a>
                 <p>Wedding, family and portrait photography in Kitchener, Waterloo and Cambridge, Ontario. Serving clients across Canada.</p>
@@ -775,7 +778,7 @@
             <!-- Admin Lock Screen -->
             <div class="admin-lockscreen" id="adminLockscreen">
                 <div class="lock-logo">
-                    <img src="Assets/logo.png" alt="North Vows Logo" onerror="this.onerror=null; this.style.display='none';">
+                    <img src="Assets/logo-sm.png" alt="North Vows Logo" loading="lazy" onerror="this.onerror=null; this.style.display='none';">
                 </div>
                 <div class="lock-form">
                     <h3>Portfolio Manager</h3>
@@ -1348,6 +1351,6 @@
 
     <!-- Scripts -->
     <!-- Bump ?v= on every deploy (see stylesheet note) -->
-    <script src="app.js?v=20261019c"></script>
+    <script src="app.js?v=20261019d"></script>
 </body>
 </html>

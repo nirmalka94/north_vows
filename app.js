@@ -247,7 +247,7 @@ const DEFAULT_SETTINGS = {
     aboutDesc1: 'North Vows was founded on the philosophy of visual simplicity. We step back to let moments unfold naturally, focusing on light, space, and quiet connections that often go unnoticed in the rush of life.',
     aboutDesc2: 'We photograph weddings, families, portraits and professional headshots across Canada. Based in Kitchener, Ontario, we serve Kitchener, Waterloo, Cambridge and the surrounding region.',
     instaHandle: '@thenorthvows',
-    instaAvatar: 'Assets/logo.png',
+    instaAvatar: 'Assets/logo-sm.png',
     whatsappNumber: '+12269894884',
     whatsappMessage: 'Hello North Vows, I would like to book a photography appointment.',
     photographerName: 'Abin',
@@ -502,16 +502,17 @@ async function hydrateSiteUI() {
     
     document.getElementById('heroDesc').textContent = state.settings.heroDesc;
 
-    // Update Hero background: use explicitly set heroImage setting first, then fall back to first portfolio photo
-    const heroBgImg = document.getElementById('heroBgImg');
-    if (heroBgImg) {
-        const heroSrc = state.settings.heroImage
-            || (state.photos.length > 0 ? state.photos[0].url : 'Assets/Photographer_Main.jpeg');
-        if (heroBgImg.getAttribute('src') !== heroSrc) heroBgImg.src = heroSrc;
-        // The photo slider (when Photo_carousel has photos) owns the cached hero image
-        if (!DEMO_MODE && carouselState.loaded && carouselState.categories.length === 0) {
-            try { localStorage.setItem('nv_hero', heroSrc); } catch (e) { /* storage unavailable */ }
-        }
+    // Hero: the first slide ships in the HTML (fast first paint). A "Hero Background
+    // Image" set in the admin panel takes its place.
+    if (state.settings.heroImage) {
+        const first = document.querySelectorAll('.hero-slide')[0];
+        const firstFrame = document.querySelectorAll('.hero-frame-slide')[0];
+        [first, firstFrame].forEach(img => {
+            if (img && img.getAttribute('src') !== state.settings.heroImage) {
+                img.removeAttribute('srcset');
+                img.src = state.settings.heroImage;
+            }
+        });
     }
 
     // 4. About Bio Elements
@@ -561,7 +562,8 @@ async function hydrateSiteUI() {
 
     // 8. Instagram Profile
     const instaHandle = state.settings.instaHandle || DEFAULT_SETTINGS.instaHandle;
-    const instaAvatar = state.settings.instaAvatar || DEFAULT_SETTINGS.instaAvatar;
+    let instaAvatar = state.settings.instaAvatar || DEFAULT_SETTINGS.instaAvatar;
+    if (instaAvatar === 'Assets/logo.png') instaAvatar = 'Assets/logo-sm.png'; // same logo, much smaller file
     document.getElementById('instaHandle').textContent = instaHandle;
     document.getElementById('instaAvatar').src = instaAvatar;
     document.getElementById('instaFollowBtn').href = `https://instagram.com/${instaHandle.replace('@', '')}`;
@@ -904,6 +906,9 @@ async function authenticateAdmin() {
                 adminPassword.value = '';
                 adminPassword.focus();
 
+            } else if (res.status >= 500 && ['localhost', '127.0.0.1'].includes(window.location.hostname)) {
+                // Local preview without a database: fall through to preview mode below
+                console.warn('[Admin Auth] No database on this local preview — using preview mode.');
             } else if (res.status === 500 || data.error) {
                 // ⚠️ Server / database config error
                 const msg = data.error || 'Unknown server error.';
@@ -913,7 +918,9 @@ async function authenticateAdmin() {
             } else {
                 lockError.textContent = 'Unexpected response from server.';
             }
-            return; // API handled it — stop here
+            if (!(res.status >= 500 && ['localhost', '127.0.0.1'].includes(window.location.hostname))) {
+                return; // API handled it — stop here
+            }
         }
 
         // Non-JSON response — PHP not running, fall through to offline check
@@ -2613,10 +2620,12 @@ function renderCarouselTrack() {
     const photos = carouselPhotos(carouselState.active);
     track.innerHTML = photos.map((p, i) => `
         <button type="button" class="carousel-item" data-index="${i}" aria-label="Open photo ${i + 1} of ${photos.length}: ${escapeHtml(p.category)}">
-            <img src="${escapeHtml(p.thumb)}" alt="${escapeHtml(p.alt)}" loading="${i < 4 ? 'eager' : 'lazy'}" decoding="async"
+            <img data-src="${escapeHtml(p.thumb)}" ${p.medium ? `data-srcset="${escapeHtml(p.thumb)} 640w, ${escapeHtml(p.medium)} 1000w" sizes="(min-width: 993px) 31vw, (min-width: 577px) 40vw, 78vw"` : ''}
+                 alt="${escapeHtml(p.alt)}" decoding="async"
                  ${p.width && p.height ? `width="${p.width}" height="${p.height}"` : ''}>
         </button>`).join('');
     track.scrollLeft = 0;
+    observeCarouselImages(track);
 
     track.querySelectorAll('.carousel-item').forEach(item => {
         item.addEventListener('click', () => {
@@ -2630,6 +2639,30 @@ function renderCarouselTrack() {
         });
     });
     updateCarouselControls();
+}
+
+// Load carousel photos only when they come near the screen (vertically or by
+// scrolling the carousel); the browser's own lazy loading starts far too early on phones.
+const carouselImageObserver = 'IntersectionObserver' in window
+    ? new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+            if (!entry.isIntersecting) return;
+            loadDeferredImage(entry.target);
+            observer.unobserve(entry.target);
+        });
+    }, { rootMargin: '300px 400px' })
+    : null;
+
+function loadDeferredImage(img) {
+    if (img.dataset.srcset) { img.srcset = img.dataset.srcset; delete img.dataset.srcset; }
+    if (img.dataset.src) { img.src = img.dataset.src; delete img.dataset.src; }
+}
+
+function observeCarouselImages(track) {
+    track.querySelectorAll('img[data-src]').forEach(img => {
+        if (carouselImageObserver) carouselImageObserver.observe(img);
+        else loadDeferredImage(img);
+    });
 }
 
 function updateCarouselControls() {
@@ -2676,45 +2709,64 @@ function pickHeroSlides() {
     return interleave(carouselState.categories.map(c => c.photos)).slice(0, HERO_SLIDE_LIMIT);
 }
 
+function heroSrcset(p) {
+    return p.medium ? `${p.thumb} 640w, ${p.medium} 1000w, ${p.large} 1600w` : '';
+}
+
 function buildHeroSlider() {
-    const slides = pickHeroSlides();
+    const staticFrame = document.querySelector('.hero-frame-slide[data-source]');
+    const staticSource = staticFrame ? staticFrame.dataset.source : '';
+    const slides = pickHeroSlides().filter(p => p.large !== staticSource).slice(0, HERO_SLIDE_LIMIT - 1);
     const key = slides.map(p => p.large).join('|');
     if (!slides.length || key === heroSlideKey) return;
     heroSlideKey = key;
-    heroIndex = 0;
+
     const bg = document.getElementById('heroSlides');
     const frame = document.getElementById('heroFrameSlides');
+    // Drop slides added by an earlier build, keep the first (HTML) slide
+    bg.querySelectorAll('.hero-slide:not(:first-child)').forEach(el => el.remove());
+    frame.querySelectorAll('.hero-frame-slide:not(:first-child)').forEach(el => el.remove());
+    // Photos load on demand (data-*), just before they are shown
+    slides.forEach(p => {
+        // Blurred backdrop: the small copy is plenty
+        bg.insertAdjacentHTML('beforeend',
+            `<img class="hero-slide" data-src="${escapeHtml(p.thumb || p.large)}" alt="" decoding="async">`);
+        frame.insertAdjacentHTML('beforeend',
+            `<img class="hero-frame-slide" data-src="${escapeHtml(p.medium || p.large)}" data-srcset="${escapeHtml(heroSrcset(p))}"
+                  sizes="(min-width: 993px) 560px, 92vw" alt="${escapeHtml(p.alt || '')}" decoding="async">`);
+    });
+
+    const total = slides.length + 1;
     const dots = document.getElementById('heroDots');
-    const imgs = (cls) => slides.map((p, i) =>
-        `<img class="${cls}${i === 0 ? ' is-active' : ''}" src="${escapeHtml(i === 0 ? p.large : '')}" data-src="${escapeHtml(p.large)}" alt="" decoding="async"${i === 0 ? ' fetchpriority="high"' : ''}>`).join('');
-    bg.innerHTML = imgs('hero-slide');
-    frame.innerHTML = imgs('hero-frame-slide');
-    dots.innerHTML = slides.length > 1 ? slides.map((_, i) =>
-        `<button type="button" class="hero-dot${i === 0 ? ' is-active' : ''}" aria-label="Show photo ${i + 1}"></button>`).join('') : '';
+    dots.innerHTML = Array.from({ length: total }, (_, i) =>
+        `<button type="button" class="hero-dot${i === heroIndex ? ' is-active' : ''}" aria-label="Show photo ${i + 1}"></button>`).join('');
     dots.querySelectorAll('.hero-dot').forEach((dot, i) => dot.addEventListener('click', () => { showHeroSlide(i); restartHeroTimer(); }));
+    if (heroIndex >= total) heroIndex = 0;
 
     document.getElementById('heroFrame').hidden = false;
     document.getElementById('home').classList.add('has-slides');
-    try { if (!DEMO_MODE) localStorage.setItem('nv_hero', slides[0].large); } catch (e) { /* storage unavailable */ }
-
-    // Load the remaining slides once the page has settled
-    const loadRest = () => document.querySelectorAll('#home img[data-src]').forEach(img => { if (!img.getAttribute('src')) img.src = img.dataset.src; });
-    if (document.readyState === 'complete') setTimeout(loadRest, 800);
-    else window.addEventListener('load', () => setTimeout(loadRest, 800));
-
+    loadHeroSlide(1); // warm up the next photo
     restartHeroTimer();
+}
+
+function loadHeroSlide(i) {
+    document.querySelectorAll(`.hero-slide:nth-child(${i + 1}), .hero-frame-slide:nth-child(${i + 1})`).forEach(img => {
+        if (img.dataset.srcset) { img.srcset = img.dataset.srcset; delete img.dataset.srcset; }
+        if (img.dataset.src) { img.src = img.dataset.src; delete img.dataset.src; }
+    });
 }
 
 document.addEventListener('visibilitychange', restartHeroTimer);
 
 function showHeroSlide(i) {
     heroIndex = i;
+    loadHeroSlide(i);
     ['.hero-slide', '.hero-frame-slide', '.hero-dot'].forEach(sel => {
-        document.querySelectorAll(sel).forEach((el, j) => {
-            if (el.tagName === 'IMG' && j === i && !el.getAttribute('src')) el.src = el.dataset.src;
-            el.classList.toggle('is-active', j === i);
-        });
+        document.querySelectorAll(sel).forEach((el, j) => el.classList.toggle('is-active', j === i));
     });
+    // Fetch the following photo now so it is ready for the next crossfade
+    const count = document.querySelectorAll('.hero-slide').length;
+    if (count > 1) loadHeroSlide((i + 1) % count);
 }
 
 function restartHeroTimer() {

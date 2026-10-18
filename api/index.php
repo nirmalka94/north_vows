@@ -152,13 +152,7 @@ switch ($action) {
         if ($submitted === $stored) {
             respond(200, ['success' => true]);
         } else {
-            respond(401, [
-                'success'    => false,
-                'error'      => 'Wrong passcode',
-                // Debug: remove these lines once login works
-                '_dbg_got'   => $submitted === '' ? '(empty)' : '(non-empty, length ' . strlen($submitted) . ')',
-                '_dbg_stored_len' => strlen($stored),
-            ]);
+            respond(401, ['success' => false, 'error' => 'Wrong passcode']);
         }
 
 
