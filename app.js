@@ -87,8 +87,11 @@ const db = new APIManager();
 
 
 // ==========================================================================
-// Predefined Sample Data (High Quality Placeholders)
+// Sample Data — only used in local preview mode (?demo in the URL).
+// The live site never shows these; empty sections stay hidden instead.
 // ==========================================================================
+const DEMO_MODE = new URLSearchParams(window.location.search).has('demo');
+
 const SAMPLE_ALBUMS = [
     { id: 'album-weddings', slug: 'weddings', name: 'Fine Art Weddings', createdAt: Date.now() },
     { id: 'album-landscapes', slug: 'landscapes', name: 'Nordic Landscapes', createdAt: Date.now() + 1 },
@@ -244,7 +247,7 @@ const DEFAULT_SETTINGS = {
     aboutDesc1: 'North Vows was founded on the philosophy of visual simplicity. We step back to let moments unfold naturally, focusing on light, space, and quiet connections that often go unnoticed in the rush of life.',
     aboutDesc2: 'Available worldwide for weddings, editorial campaigns, architectural portfolios, and select creative projects. Based in Kitchener, Ontario, serving Kitchener, Waterloo and Cambridge.',
     instaHandle: '@northvows_photo',
-    instaAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=150',
+    instaAvatar: 'Assets/logo.png',
     whatsappNumber: '+12269894884',
     whatsappMessage: 'Hello North Vows, I would like to book a photography appointment.',
     photographerName: 'Abin',
@@ -252,9 +255,85 @@ const DEFAULT_SETTINGS = {
     photographerBio: 'With 5 years of experience as a destination wedding photographer at Magicmotionmedia and Vows of Love, Abin brings a heartfelt, cinematic eye to every session. His work captures the quiet moments — a stolen glance, a tender touch — that tell the real story of your day.',
     studioPhone: '+1 (226) 989-4884',
     studioAddress: 'Kitchener, ON N2E 2K2',
-    rateSession: '250',
-    rateWedding: '500',
-    heroImage: ''
+    heroImage: '',
+    googleReviewsUrl: '',
+    // Lists below are stored as JSON strings in nv_settings and edited in
+    // Admin → "Pricing, Reviews & FAQ".
+    // Starting-price plans. Every other event type gets the "tailor-made" card,
+    // which is always shown below these.
+    packages: JSON.stringify([
+        {
+            name: 'Mini Sessions',
+            priceNote: 'Starting from',
+            price: '100',
+            tagline: 'A short, relaxed shoot that fits into a busy week.',
+            includes: 'Ideal for couples, solo portraits and seasonal photos\nRelaxed and guided, no posing experience needed\nHand-edited, high-resolution photos',
+            eventType: '',
+            ctaLabel: 'Book a mini session',
+            featured: false
+        },
+        {
+            name: 'Family Sessions',
+            priceNote: 'Starting from',
+            price: '200',
+            tagline: 'Natural, unposed photos of the people who matter most.',
+            includes: 'Families of every size, kids and pets welcome\nAt home, in a park, or at your favourite spot\nHand-edited, high-resolution photos',
+            eventType: 'Family Session',
+            ctaLabel: 'Book a family session',
+            featured: false
+        },
+        {
+            name: 'Weddings',
+            priceNote: 'Starting from',
+            price: '500',
+            tagline: 'Your day told honestly, from the quiet moments to the celebration.',
+            includes: 'Coverage built around your day and your timeline\nPersonal planning help before the wedding\nPhotography, videography, or both\nFull digital gallery to share with family',
+            eventType: 'Wedding',
+            ctaLabel: 'Check my date',
+            featured: true
+        }
+    ]),
+    faqs: JSON.stringify([
+        {
+            q: 'Which areas do you cover? Is there a travel fee?',
+            a: 'We are based in Kitchener and travel within Kitchener, Waterloo and Cambridge at no extra cost. For other locations in Ontario, or for destination weddings, we add a travel fee that we quote upfront.'
+        },
+        {
+            q: 'How soon will we receive our photos?',
+            a: 'Delivery depends on the size of your event. We agree a delivery date with you when we plan your package, so you know exactly when to expect your gallery.'
+        },
+        {
+            q: 'How do we book our date?',
+            a: 'Send us your date through the form or WhatsApp. Once we confirm availability, a signed agreement and a retainer secure your date. The balance is due one week before the event.'
+        },
+        {
+            q: 'How many photos will we get?',
+            a: 'It depends on the package and the length of your session. We confirm it with you before you book, so there are no surprises. Every image is individually edited, never just filtered.'
+        },
+        {
+            q: 'Do you offer videography?',
+            a: 'Yes. Videography is available on its own or together with photography. Choose "Photography + Videography" in the contact form and we will send a combined quote.'
+        },
+        {
+            q: 'Can we print our photos?',
+            a: 'Yes. Every gallery comes with high-resolution downloads and a personal print release, so you can print anywhere you like.'
+        }
+    ]),
+    testimonials: '[]',
+    stories: '[]'
+};
+
+// Shown only in preview mode so the layout can be reviewed before real content exists.
+const DEMO_CONTENT = {
+    testimonials: [
+        { names: 'Sample Couple A', event: 'Wedding · Sample venue, Cambridge', quote: 'Sample review text. Replace this with a real review from a client in Admin → Pricing, Reviews & FAQ.', photo: '', rating: '5', source: 'Google' },
+        { names: 'Sample Couple B', event: 'Engagement · Victoria Park, Kitchener', quote: 'Sample review text showing how a longer review wraps across several lines inside the card on desktop and mobile.', photo: '', rating: '5', source: 'Google' },
+        { names: 'Sample Client C', event: 'Family Session · Waterloo Park', quote: 'Sample review text.', photo: '', rating: '5', source: '' }
+    ],
+    stories: [
+        { couple: 'Sample Couple A', venue: 'Sample Venue', city: 'Cambridge', date: 'Sept 2026', cover: 'https://images.unsplash.com/photo-1519741497674-611481863552?q=80&w=1000', summary: 'A short sample story: how the day felt, a favourite moment, and the light at golden hour.', album: 'weddings' },
+        { couple: 'Sample Couple B', venue: 'Sample Venue', city: 'Kitchener', date: 'June 2026', cover: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?q=80&w=1000', summary: 'Another sample story to preview how two cards sit side by side.', album: '' }
+    ]
 };
 
 // ==========================================================================
@@ -274,10 +353,20 @@ const state = {
 // Global Page Inits & DOM Element Cache
 // ==========================================================================
 function loadFallbackData() {
-    state.albums = [...SAMPLE_ALBUMS];
-    state.photos = [...SAMPLE_PHOTOS];
-    state.instagramPosts = [...SAMPLE_INSTAGRAM];
+    state.albums = DEMO_MODE ? [...SAMPLE_ALBUMS] : [];
+    state.photos = DEMO_MODE ? [...SAMPLE_PHOTOS] : [];
+    state.instagramPosts = DEMO_MODE ? [...SAMPLE_INSTAGRAM] : [];
     state.settings = { ...DEFAULT_SETTINGS };
+    applyDemoContent();
+}
+
+function applyDemoContent() {
+    if (!DEMO_MODE) return;
+    for (const [key, list] of Object.entries(DEMO_CONTENT)) {
+        if (getContentList(key).length === 0) state.settings[key] = JSON.stringify(list);
+    }
+    const banner = document.getElementById('demoBanner');
+    if (banner) banner.hidden = false;
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -332,10 +421,11 @@ async function loadAndInitializeDatabase(forceReset = false) {
         db.getSettings()
     ]);
 
-    // Use DB content when available; fall back to sample data only when tables are empty
-    state.albums         = dbAlbums.length        > 0 ? dbAlbums        : [...SAMPLE_ALBUMS];
-    state.photos         = dbPhotos.length        > 0 ? dbPhotos        : [...SAMPLE_PHOTOS];
-    state.instagramPosts = dbInsta.length         > 0 ? dbInsta         : [...SAMPLE_INSTAGRAM];
+    // Use DB content; sample data only appears in preview mode (?demo)
+    const pick = (rows, samples) => (Array.isArray(rows) && rows.length > 0) ? rows : (DEMO_MODE ? [...samples] : []);
+    state.albums         = pick(dbAlbums, SAMPLE_ALBUMS);
+    state.photos         = pick(dbPhotos, SAMPLE_PHOTOS);
+    state.instagramPosts = pick(dbInsta, SAMPLE_INSTAGRAM);
 
     state.albums.sort((a, b) => a.createdAt - b.createdAt);
     state.photos.sort((a, b) => a.createdAt - b.createdAt);
@@ -351,6 +441,7 @@ async function loadAndInitializeDatabase(forceReset = false) {
             }
         }
     }
+    applyDemoContent();
 }
 
 /**
@@ -412,8 +503,8 @@ async function hydrateSiteUI() {
     // Update Hero background: use explicitly set heroImage setting first, then fall back to first portfolio photo
     const heroBgImg = document.getElementById('heroBgImg');
     if (heroBgImg) {
-        const heroSrc = state.settings.heroImage || (state.photos.length > 0 ? state.photos[0].url : '');
-        if (heroSrc) heroBgImg.src = heroSrc;
+        heroBgImg.src = state.settings.heroImage
+            || (state.photos.length > 0 ? state.photos[0].url : 'Assets/Photographer_Main.jpeg');
     }
 
     // 4. About Bio Elements
@@ -430,11 +521,11 @@ async function hydrateSiteUI() {
     const photographerBioEl = document.getElementById('photographerBioDisplay');
     if (photographerBioEl) photographerBioEl.textContent = state.settings.photographerBio || DEFAULT_SETTINGS.photographerBio;
 
-    // 6. Services & Investment Rates
-    const rateSessionEl = document.getElementById('rateSessionDisplay');
-    if (rateSessionEl) rateSessionEl.textContent = state.settings.rateSession || DEFAULT_SETTINGS.rateSession;
-    const rateWeddingEl = document.getElementById('rateWeddingDisplay');
-    if (rateWeddingEl) rateWeddingEl.textContent = state.settings.rateWedding || DEFAULT_SETTINGS.rateWedding;
+    // 6. Packages, stories, reviews & FAQ
+    renderPackages();
+    renderStories();
+    renderTestimonials();
+    renderFaqs();
 
     // 7. Contact Info Details
     const contactPhoneEl = document.getElementById('contactPhoneDisplay');
@@ -625,7 +716,12 @@ function renderInstagramFeedGrid() {
     const posts = state.instagramPosts.slice(-6).reverse();
 
     if (posts.length === 0) {
-        grid.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding: 3rem 0; color: var(--color-muted);">No feed posts configure yet.</div>`;
+        const handle = state.settings.instaHandle || DEFAULT_SETTINGS.instaHandle;
+        grid.innerHTML = `
+            <a class="instagram-empty" href="https://instagram.com/${encodeURIComponent(handle.replace('@', ''))}" target="_blank" rel="noopener noreferrer">
+                <span>See our latest work on Instagram</span>
+                <strong>${escapeHtml(handle)} &rarr;</strong>
+            </a>`;
         return;
     }
 
@@ -638,17 +734,9 @@ function renderInstagramFeedGrid() {
         item.setAttribute('aria-label', `View Instagram post: ${post.caption.substring(0, 30)}...`);
 
         item.innerHTML = `
-            <img src="${post.imgUrl}" alt="${post.caption}" class="instagram-img" loading="lazy">
+            <img src="${escapeHtml(post.imgUrl)}" alt="${escapeHtml(post.caption)}" class="instagram-img" loading="lazy">
             <div class="instagram-hover">
-                <div class="instagram-stats">
-                    <div class="instagram-stat-item">
-                        <svg viewBox="0 0 24 24">
-                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-                        </svg>
-                        <span>${post.likes}</span>
-                    </div>
-                </div>
-                <p class="instagram-caption">${post.caption}</p>
+                <p class="instagram-caption">${escapeHtml(post.caption)}</p>
             </div>
         `;
 
@@ -782,16 +870,17 @@ async function authenticateAdmin() {
         console.warn('[Admin Auth] Network error — switching to offline mode:', err);
     }
 
-    // --- Offline / local fallback: compare against locally stored passcode ---
-    const storedPasscode = state.settings.passcode || DEFAULT_SETTINGS.passcode;
-    if (pass === storedPasscode) {
+    // --- Offline fallback: only on a local preview, where the API is unavailable
+    // and nothing can be saved. The real passcode is never shipped to the browser.
+    const isLocalPreview = ['localhost', '127.0.0.1', ''].includes(window.location.hostname);
+    if (isLocalPreview && pass.length > 0) {
         db.setPasscode(pass);
         isAdminUnlocked = true;
         lockError.textContent = '';
         adminLockscreen.classList.add('unlocked');
         refreshAdminViews();
         loadInstagramApiStatus();
-        showToast('Access Granted (offline mode). Changes will not be saved to the database.');
+        showToast('Preview mode: changes show on the page but are not saved to the database.');
     } else {
         lockError.textContent = 'Invalid passcode.';
         adminPassword.value = '';
@@ -829,6 +918,7 @@ function refreshAdminViews() {
     renderAdminPhotosTable();
     renderAdminInstagramTable();
     populateAdminSettingsForm();
+    renderContentEditors();
 }
 
 // --- TAB 1: ALBUM MANAGEMENT LOGIC ---
@@ -1132,7 +1222,7 @@ const adminInstaTableBody = document.getElementById('adminInstaTableBody');
 
 const newInstaImg = document.getElementById('newInstaImg');
 const newInstaCaption = document.getElementById('newInstaCaption');
-const newInstaLikes = document.getElementById('newInstaLikes');
+const newInstaPostUrl = document.getElementById('newInstaPostUrl');
 
 function renderAdminInstagramTable() {
     adminInstaTableBody.innerHTML = '';
@@ -1150,7 +1240,7 @@ function renderAdminInstagramTable() {
         tr.innerHTML = `
             <td><img src="${post.imgUrl}" alt="Instagram image" class="admin-table-img"></td>
             <td><p style="font-size:0.85rem; max-width: 300px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${post.caption}</p></td>
-            <td>${post.likes}</td>
+            <td>${post.postUrl ? `<a href="${escapeHtml(post.postUrl)}" target="_blank" rel="noopener noreferrer" class="text-accent">Open</a>` : '—'}</td>
             <td class="action-btns">
                 <button class="action-btn delete delete-insta-btn" title="Delete Post" data-id="${post.id}">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
@@ -1198,14 +1288,14 @@ if (instaAddPostForm) {
         
         const imgUrl = newInstaImg.value.trim();
         const caption = newInstaCaption.value.trim();
-        const likes = parseInt(newInstaLikes.value, 10) || 0;
+        const postUrl = newInstaPostUrl.value.trim();
 
         const newPost = {
             id: 'insta-' + Date.now(),
             imgUrl,
             caption,
-            likes,
-            postUrl: `https://instagram.com/${state.settings.instaHandle.replace('@', '')}`,
+            likes: 0,
+            postUrl: postUrl || `https://instagram.com/${state.settings.instaHandle.replace('@', '')}`,
             createdAt: Date.now()
         };
 
@@ -1213,7 +1303,6 @@ if (instaAddPostForm) {
         state.instagramPosts = await db.getInstagramPosts();
         
         instaAddPostForm.reset();
-        newInstaLikes.value = '120'; // Default fallback value
         
         refreshAdminViews();
         hydrateSiteUI();
@@ -1325,9 +1414,6 @@ function populateAdminSettingsForm() {
     document.getElementById('settingStudioPhone').value = state.settings.studioPhone || DEFAULT_SETTINGS.studioPhone;
     document.getElementById('settingStudioAddress').value = state.settings.studioAddress || DEFAULT_SETTINGS.studioAddress;
 
-    document.getElementById('settingRateSession').value = state.settings.rateSession || DEFAULT_SETTINGS.rateSession;
-    document.getElementById('settingRateWedding').value = state.settings.rateWedding || DEFAULT_SETTINGS.rateWedding;
-
     document.getElementById('settingWhatsappNumber').value = state.settings.whatsappNumber || DEFAULT_SETTINGS.whatsappNumber;
     document.getElementById('settingWhatsappMessage').value = state.settings.whatsappMessage || DEFAULT_SETTINGS.whatsappMessage;
 
@@ -1355,7 +1441,6 @@ if (siteSettingsForm) {
             'aboutTitle', 'aboutSubtitle', 'aboutDesc1', 'aboutDesc2',
             'photographerName', 'photographerRole', 'photographerBio',
             'studioPhone', 'studioAddress',
-            'rateSession', 'rateWedding',
             'whatsappNumber', 'whatsappMessage',
             'heroImage'
         ];
@@ -1745,4 +1830,471 @@ function setupGlobalEventListeners() {
             showPrevPhoto(); // Swiped right -> Prev
         }
     }
+}
+
+// ==========================================================================
+// Packages, Wedding Stories, Testimonials & FAQ
+// Each list is stored as a JSON string in nv_settings (no extra DB tables).
+// ==========================================================================
+function escapeHtml(str) {
+    return String(str ?? '').replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+}
+
+function getContentList(key) {
+    try {
+        const list = JSON.parse(state.settings[key] || '[]');
+        return Array.isArray(list) ? list : [];
+    } catch {
+        return [];
+    }
+}
+
+// Shows a section (and its nav link) only when it has content
+function toggleSection(sectionId, visible) {
+    const section = document.getElementById(sectionId);
+    if (section) section.hidden = !visible;
+    document.querySelectorAll(`[data-nav-for="${sectionId}"]`).forEach(li => { li.hidden = !visible; });
+}
+
+function linesToList(text) {
+    return String(text || '').split('\n').map(l => l.trim()).filter(Boolean);
+}
+
+function renderPackages() {
+    const grid = document.getElementById('packagesGrid');
+    if (!grid) return;
+    const packages = getContentList('packages');
+
+    const planCards = packages.map((pkg, index) => {
+        const priceHtml = pkg.price
+            ? `${pkg.priceNote ? `<span class="package-price-note">${escapeHtml(pkg.priceNote)}</span>` : ''}
+               <span class="package-amount">$${escapeHtml(pkg.price)}</span><span class="package-currency">CAD</span>`
+            : `<span class="package-amount package-amount-text">Custom quote</span>`;
+        const highlights = [pkg.hours, pkg.photos].filter(Boolean)
+            .map(h => `<li>${escapeHtml(h)}</li>`).join('');
+        const includes = linesToList(pkg.includes).map(i => `<li>${escapeHtml(i)}</li>`).join('');
+
+        return `
+            <article class="package-card ${pkg.featured ? 'featured' : ''}">
+                ${pkg.featured ? '<span class="package-badge">Signature</span>' : ''}
+                <h3 class="package-name">${escapeHtml(pkg.name)}</h3>
+                ${pkg.tagline ? `<p class="package-tagline">${escapeHtml(pkg.tagline)}</p>` : ''}
+                <div class="package-price">${priceHtml}</div>
+                ${highlights ? `<ul class="package-highlights">${highlights}</ul>` : ''}
+                ${includes ? `<ul class="package-includes">${includes}</ul>` : ''}
+                <a href="#contact" class="package-cta" data-package-index="${index}">${escapeHtml(pkg.ctaLabel || 'Check my date')}</a>
+            </article>`;
+    }).join('');
+
+    // Always offered: a tailor-made package for every other kind of event
+    const hasPlans = packages.length > 0;
+    const tailoredCard = `
+        <article class="package-card package-tailored">
+            <div>
+                <span class="package-price-note">${hasPlans ? 'Something else in mind?' : 'Made for you'}</span>
+                <h3 class="package-name">Tailor-Made Packages</h3>
+                <p class="package-tailored-text">${hasPlans
+                    ? 'Pre-wedding shoots, intimate functions, graduations, prom, professional headshots, or something completely different. Tell us what you need and we will build a package and price around it.'
+                    : 'Every celebration is different, so we do not sell one-size-fits-all packages. Tell us about your event and we will put together the package that fits your day and your budget.'}</p>
+            </div>
+            <div>
+                <ul class="package-includes">
+                    <li>Coverage hours that match your schedule</li>
+                    <li>Photography, videography, or both</li>
+                    <li>Locations across Kitchener, Waterloo, Cambridge and beyond</li>
+                    <li>A clear quote before you book, with no hidden extras</li>
+                </ul>
+                <a href="#contact" class="package-cta" id="tailoredPackageCta">Get a custom quote</a>
+            </div>
+        </article>`;
+
+    grid.style.setProperty('--plan-cols', Math.min(Math.max(packages.length, 1), 3));
+    grid.innerHTML = planCards + tailoredCard;
+
+    grid.querySelectorAll('.package-cta[data-package-index]').forEach(btn => {
+        btn.addEventListener('click', () => prefillEnquiry(packages[Number(btn.dataset.packageIndex)]));
+    });
+    document.getElementById('tailoredPackageCta').addEventListener('click', () => prefillEnquiry({
+        name: 'tailor-made',
+        message: "Hi! I'd like a tailor-made package for my event."
+    }));
+}
+
+// Pre-fills the contact form from a package's "Check my date" button
+function prefillEnquiry(pkg) {
+    if (!pkg) return;
+    const eventSelect = document.getElementById('contactEventType');
+    if (eventSelect && pkg.eventType) {
+        const match = [...eventSelect.options].find(o => o.text === pkg.eventType);
+        if (match) eventSelect.value = match.value || match.text;
+    }
+    const message = document.getElementById('contactMessage');
+    if (message && !message.value.trim()) {
+        message.value = pkg.message || `Hi! I'm interested in your ${pkg.name} package.`;
+    }
+    setTimeout(() => document.getElementById('contactName')?.focus({ preventScroll: true }), 600);
+}
+
+function renderStories() {
+    const grid = document.getElementById('storiesGrid');
+    if (!grid) return;
+    const stories = getContentList('stories');
+    toggleSection('stories', stories.length > 0);
+
+    grid.innerHTML = stories.map((story, index) => {
+        const meta = [story.venue, story.city, story.date].filter(Boolean).map(escapeHtml).join(' · ');
+        const album = state.albums.find(a => a.slug === story.album);
+        return `
+            <article class="story-card">
+                ${story.cover ? `<div class="story-cover"><img src="${escapeHtml(story.cover)}" alt="${escapeHtml(story.couple)}${story.venue ? ' at ' + escapeHtml(story.venue) : ''}" loading="lazy"></div>` : ''}
+                <div class="story-body">
+                    ${meta ? `<span class="story-meta">${meta}</span>` : ''}
+                    <h3 class="story-title">${escapeHtml(story.couple)}</h3>
+                    ${story.summary ? `<p class="story-summary">${escapeHtml(story.summary)}</p>` : ''}
+                    ${album ? `<button type="button" class="story-link" data-album="${escapeHtml(album.slug)}">View the gallery &rarr;</button>` : ''}
+                </div>
+            </article>`;
+    }).join('');
+
+    grid.querySelectorAll('.story-link').forEach(btn => {
+        btn.addEventListener('click', () => {
+            state.currentFilter = btn.dataset.album;
+            renderPortfolioNav();
+            renderPortfolioGrid();
+            document.getElementById('gallery').scrollIntoView({ behavior: 'smooth' });
+        });
+    });
+}
+
+function renderTestimonials() {
+    const grid = document.getElementById('reviewsGrid');
+    if (!grid) return;
+    const reviews = getContentList('testimonials');
+    toggleSection('reviews', reviews.length > 0);
+
+    grid.innerHTML = reviews.map(review => {
+        const rating = Math.max(0, Math.min(5, parseInt(review.rating, 10) || 0));
+        const initials = String(review.names || '?').split(/\s|&/).filter(Boolean)
+            .slice(0, 2).map(w => w[0].toUpperCase()).join('');
+        return `
+            <figure class="review-card">
+                ${rating ? `<div class="review-stars" aria-label="${rating} out of 5 stars">${'★'.repeat(rating)}</div>` : ''}
+                <blockquote class="review-quote">${escapeHtml(review.quote)}</blockquote>
+                <figcaption class="review-author">
+                    ${review.photo
+                        ? `<img src="${escapeHtml(review.photo)}" alt="${escapeHtml(review.names)}" class="review-avatar" loading="lazy">`
+                        : `<span class="review-avatar review-avatar-initials" aria-hidden="true">${escapeHtml(initials)}</span>`}
+                    <span>
+                        <strong class="review-names">${escapeHtml(review.names)}</strong>
+                        ${review.event ? `<span class="review-event">${escapeHtml(review.event)}</span>` : ''}
+                    </span>
+                    ${review.source ? `<span class="review-source">via ${escapeHtml(review.source)}</span>` : ''}
+                </figcaption>
+            </figure>`;
+    }).join('');
+
+    const footer = document.getElementById('reviewsFooter');
+    const link = document.getElementById('googleReviewsLink');
+    if (footer && link) {
+        footer.hidden = !state.settings.googleReviewsUrl;
+        if (state.settings.googleReviewsUrl) link.href = state.settings.googleReviewsUrl;
+    }
+}
+
+function renderFaqs() {
+    const list = document.getElementById('faqList');
+    if (!list) return;
+    const faqs = getContentList('faqs');
+    toggleSection('faq', faqs.length > 0);
+
+    list.innerHTML = faqs.map(faq => `
+        <details class="faq-item">
+            <summary class="faq-question">${escapeHtml(faq.q)}</summary>
+            <div class="faq-answer">${linesToList(faq.a).map(p => `<p>${escapeHtml(p)}</p>`).join('')}</div>
+        </details>`).join('');
+
+    // FAQ structured data so Google can show the answers in search results
+    const schemaEl = document.getElementById('faqSchema');
+    if (schemaEl) {
+        schemaEl.textContent = faqs.length ? JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'FAQPage',
+            mainEntity: faqs.map(f => ({
+                '@type': 'Question',
+                name: f.q,
+                acceptedAnswer: { '@type': 'Answer', text: f.a }
+            }))
+        }) : '';
+    }
+}
+
+// --- ADMIN: generic list editors for the "Pricing, Reviews & FAQ" tab ---
+const EVENT_TYPE_OPTIONS = ['', 'Wedding', 'Pre-wedding', 'Intimate Function', 'Couple Portrait', 'Family Session',
+    'Solo Portrait', 'Graduation / Prom', 'Professional Headshot', 'Pet Session', 'Other'];
+
+const CONTENT_EDITORS = [
+    {
+        key: 'packages',
+        title: 'Packages & Pricing (CAD)',
+        itemLabel: 'Package',
+        hint: 'Starting-price plans. A "Tailor-Made Packages" card for all other events is always shown below them.',
+        fields: [
+            { name: 'name', label: 'Package Name', required: true, placeholder: 'e.g. Wedding Essentials' },
+            { name: 'price', label: 'Price in CAD (leave blank for "Custom quote")', placeholder: 'e.g. 500' },
+            { name: 'priceNote', label: 'Text Before Price', placeholder: 'e.g. Starting from' },
+            { name: 'tagline', label: 'One-Line Description', placeholder: 'e.g. A short, relaxed shoot that fits into a busy week.' },
+            { name: 'ctaLabel', label: 'Button Text', placeholder: 'e.g. Check my date' },
+            { name: 'hours', label: 'Coverage / Duration', placeholder: 'e.g. Up to 3 hours of coverage' },
+            { name: 'photos', label: 'Photos Delivered', placeholder: 'e.g. 150+ edited photos' },
+            { name: 'eventType', label: 'Event Type Pre-selected in Contact Form', type: 'select', options: EVENT_TYPE_OPTIONS },
+            { name: 'includes', label: "What's Included (one item per line)", type: 'textarea', full: true },
+            { name: 'featured', label: 'Highlight as "Signature"', type: 'checkbox' }
+        ],
+        summary: item => [item.name, item.price ? `$${item.price} CAD` : 'Custom quote']
+    },
+    {
+        key: 'testimonials',
+        title: 'Client Reviews',
+        itemLabel: 'Review',
+        hint: 'Only add real reviews, with the client\'s permission. The Reviews section stays hidden until you add one.',
+        fields: [
+            { name: 'names', label: 'Client Name(s)', required: true, placeholder: 'e.g. Priya & Daniel' },
+            { name: 'event', label: 'Event & Location', placeholder: 'e.g. Wedding · Langdon Hall, Cambridge' },
+            { name: 'quote', label: 'Review Text', type: 'textarea', required: true, full: true },
+            { name: 'photo', label: 'Client Photo (optional)', type: 'image' },
+            { name: 'rating', label: 'Star Rating (1–5, blank to hide)', type: 'number', min: 1, max: 5, placeholder: '5' },
+            { name: 'source', label: 'Review Source (optional)', placeholder: 'e.g. Google' }
+        ],
+        summary: item => [item.names, String(item.quote || '').slice(0, 60) + (String(item.quote || '').length > 60 ? '…' : '')]
+    },
+    {
+        key: 'stories',
+        title: 'Real Wedding Stories',
+        itemLabel: 'Story',
+        hint: 'Name the venue and city. Local venue names help couples find you on Google. Link an album to add a "View the gallery" button.',
+        fields: [
+            { name: 'couple', label: 'Couple', required: true, placeholder: 'e.g. Priya & Daniel' },
+            { name: 'venue', label: 'Venue', placeholder: 'e.g. Langdon Hall' },
+            { name: 'city', label: 'City', placeholder: 'e.g. Cambridge' },
+            { name: 'date', label: 'Month / Year', placeholder: 'e.g. Sept 2026' },
+            { name: 'cover', label: 'Cover Photo', type: 'image', required: true },
+            { name: 'album', label: 'Linked Portfolio Album (optional)', type: 'album' },
+            { name: 'summary', label: 'Short Story (2–3 sentences)', type: 'textarea', full: true }
+        ],
+        summary: item => [item.couple, [item.venue, item.city].filter(Boolean).join(', ')]
+    },
+    {
+        key: 'faqs',
+        title: 'Frequently Asked Questions',
+        itemLabel: 'Question',
+        fields: [
+            { name: 'q', label: 'Question', required: true, full: true },
+            { name: 'a', label: 'Answer (blank line = new paragraph)', type: 'textarea', required: true, full: true }
+        ],
+        summary: item => [item.q, String(item.a || '').slice(0, 60) + (String(item.a || '').length > 60 ? '…' : '')]
+    }
+];
+
+const contentEditorState = {}; // key → index being edited (or null)
+
+function renderContentEditors() {
+    const container = document.getElementById('contentEditors');
+    if (!container) return;
+    container.innerHTML = '';
+    CONTENT_EDITORS.forEach(config => container.appendChild(buildContentEditor(config)));
+
+    const googleInput = document.getElementById('settingGoogleReviewsUrl');
+    if (googleInput) googleInput.value = state.settings.googleReviewsUrl || '';
+}
+
+function buildContentFieldHtml(config, field) {
+    const id = `ce-${config.key}-${field.name}`;
+    const req = field.required ? 'required' : '';
+    const ph = field.placeholder ? `placeholder="${escapeHtml(field.placeholder)}"` : '';
+    let input;
+    switch (field.type) {
+        case 'textarea':
+            input = `<textarea id="${id}" name="${field.name}" class="admin-textarea" ${req} ${ph}></textarea>`;
+            break;
+        case 'select':
+            input = `<select id="${id}" name="${field.name}" class="admin-select">${field.options.map(o =>
+                `<option value="${escapeHtml(o)}">${o ? escapeHtml(o) : 'None'}</option>`).join('')}</select>`;
+            break;
+        case 'album':
+            input = `<select id="${id}" name="${field.name}" class="admin-select"><option value="">None</option>${state.albums.map(a =>
+                `<option value="${escapeHtml(a.slug)}">${escapeHtml(a.name)}</option>`).join('')}</select>`;
+            break;
+        case 'checkbox':
+            return `<div class="admin-flex-col ce-checkbox"><label for="${id}"><input type="checkbox" id="${id}" name="${field.name}"> ${escapeHtml(field.label)}</label></div>`;
+        case 'image':
+            input = `<div class="ce-image-row">
+                        <input type="text" id="${id}" name="${field.name}" class="admin-input" ${req} placeholder="Image URL, or upload →">
+                        <button type="button" class="admin-btn btn-outline ce-upload-btn" data-target="${id}">Upload</button>
+                        <input type="file" accept="image/*" class="ce-upload-input" data-target="${id}" hidden>
+                     </div>`;
+            break;
+        case 'number':
+            input = `<input type="number" id="${id}" name="${field.name}" class="admin-input" min="${field.min}" max="${field.max}" ${req} ${ph}>`;
+            break;
+        default:
+            input = `<input type="text" id="${id}" name="${field.name}" class="admin-input" ${req} ${ph}>`;
+    }
+    return `<div class="admin-flex-col ${field.full ? 'ce-full' : ''}"><label class="form-label" for="${id}">${escapeHtml(field.label)}</label>${input}</div>`;
+}
+
+function buildContentEditor(config) {
+    const list = getContentList(config.key);
+    const editingIndex = contentEditorState[config.key] ?? null;
+    const card = document.createElement('div');
+    card.className = 'admin-card ce-card';
+
+    card.innerHTML = `
+        <h3 style="margin-bottom:0.5rem; font-size:1.1rem; text-transform:uppercase; letter-spacing:0.05em;">${escapeHtml(config.title)}</h3>
+        ${config.hint ? `<p style="font-size:0.8rem; color:var(--color-muted); margin-bottom:1rem; line-height:1.5;">${escapeHtml(config.hint)}</p>` : ''}
+        <div class="admin-table-wrap" style="margin-bottom:1.5rem;">
+            <table class="admin-table">
+                <tbody>
+                    ${list.length === 0
+                        ? `<tr><td style="text-align:center; color:var(--color-muted); padding:1.5rem;">Nothing added yet. This section is hidden on the website.</td></tr>`
+                        : list.map((item, i) => {
+                            const [main, sub] = config.summary(item);
+                            return `<tr ${i === editingIndex ? 'class="ce-editing"' : ''}>
+                                <td><strong style="font-weight:500;">${escapeHtml(main)}</strong><br><span style="font-size:0.8rem; color:var(--color-muted);">${escapeHtml(sub || '')}</span></td>
+                                <td style="width:1%; white-space:nowrap;"><div class="action-btns">
+                                    <button type="button" class="action-btn" data-action="up" data-index="${i}" title="Move up" ${i === 0 ? 'disabled' : ''}>
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"/></svg>
+                                    </button>
+                                    <button type="button" class="action-btn" data-action="down" data-index="${i}" title="Move down" ${i === list.length - 1 ? 'disabled' : ''}>
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+                                    </button>
+                                    <button type="button" class="action-btn" data-action="edit" data-index="${i}" title="Edit">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
+                                    </button>
+                                    <button type="button" class="action-btn delete" data-action="delete" data-index="${i}" title="Delete">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                                    </button>
+                                </div></td>
+                            </tr>`;
+                        }).join('')}
+                </tbody>
+            </table>
+        </div>
+        <form class="ce-form">
+            <h4 class="ce-form-title">${editingIndex === null ? `Add ${escapeHtml(config.itemLabel)}` : `Edit ${escapeHtml(config.itemLabel)}`}</h4>
+            <div class="admin-flex-row">${config.fields.map(f => buildContentFieldHtml(config, f)).join('')}</div>
+            <div style="display:flex; gap:0.75rem;">
+                <button type="submit" class="admin-btn">${editingIndex === null ? `Add ${escapeHtml(config.itemLabel)}` : 'Save Changes'}</button>
+                ${editingIndex === null ? '' : '<button type="button" class="admin-btn btn-outline ce-cancel">Cancel</button>'}
+            </div>
+        </form>`;
+
+    const form = card.querySelector('.ce-form');
+
+    // Fill the form when editing an existing item
+    if (editingIndex !== null && list[editingIndex]) {
+        const item = list[editingIndex];
+        config.fields.forEach(f => {
+            const el = form.elements[f.name];
+            if (!el) return;
+            if (f.type === 'checkbox') el.checked = !!item[f.name];
+            else el.value = item[f.name] ?? '';
+        });
+    }
+
+    card.querySelectorAll('[data-action]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const i = Number(btn.dataset.index);
+            const items = getContentList(config.key);
+            const action = btn.dataset.action;
+            if (action === 'edit') {
+                contentEditorState[config.key] = i;
+                renderContentEditors();
+                return;
+            }
+            if (action === 'delete') {
+                if (!confirm(`Delete this ${config.itemLabel.toLowerCase()}?`)) return;
+                items.splice(i, 1);
+                contentEditorState[config.key] = null;
+            } else {
+                const j = action === 'up' ? i - 1 : i + 1;
+                if (j < 0 || j >= items.length) return;
+                [items[i], items[j]] = [items[j], items[i]];
+            }
+            await saveContentList(config.key, items);
+        });
+    });
+
+    card.querySelector('.ce-cancel')?.addEventListener('click', () => {
+        contentEditorState[config.key] = null;
+        renderContentEditors();
+    });
+
+    card.querySelectorAll('.ce-upload-btn').forEach(btn => {
+        const fileInput = card.querySelector(`.ce-upload-input[data-target="${btn.dataset.target}"]`);
+        btn.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', async () => {
+            const file = fileInput.files[0];
+            if (!file) return;
+            showToast('Uploading image…');
+            try {
+                const result = await db.uploadImage(file);
+                if (result && result.url) {
+                    document.getElementById(btn.dataset.target).value = result.url;
+                    showToast('Image uploaded.');
+                } else {
+                    showToast('Upload failed: ' + (result?.error || 'Unknown error'), true);
+                }
+            } catch (err) {
+                showToast('Upload needs the live server. Paste an image URL instead.', true);
+            }
+        });
+    });
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const item = {};
+        config.fields.forEach(f => {
+            const el = form.elements[f.name];
+            item[f.name] = f.type === 'checkbox' ? el.checked : el.value.trim();
+        });
+        const items = getContentList(config.key);
+        if (editingIndex === null) items.push(item);
+        else items[editingIndex] = item;
+        contentEditorState[config.key] = null;
+        await saveContentList(config.key, items);
+    });
+
+    return card;
+}
+
+async function saveContentList(key, list) {
+    state.settings[key] = JSON.stringify(list);
+    renderContentEditors();
+    hydrateSiteUI();
+    try {
+        const res = await db.saveSetting(key, state.settings[key]);
+        if (res && res.error) throw new Error(res.error);
+        showToast('Saved.');
+    } catch (err) {
+        showToast('Updated on this page only. Could not save to the database.', true);
+    }
+}
+
+const googleReviewsForm = document.getElementById('googleReviewsForm');
+if (googleReviewsForm) {
+    googleReviewsForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const url = document.getElementById('settingGoogleReviewsUrl').value.trim();
+        state.settings.googleReviewsUrl = url;
+        hydrateSiteUI();
+        try {
+            const res = await db.saveSetting('googleReviewsUrl', url);
+            if (res && res.error) throw new Error(res.error);
+            showToast('Google reviews link saved.');
+        } catch {
+            showToast('Updated on this page only. Could not save to the database.', true);
+        }
+    });
 }

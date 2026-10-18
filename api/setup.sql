@@ -49,3 +49,8 @@ VALUES ('passcode', 'change_me');  -- set your own; must match DEFAULT_PASSCODE 
 UPDATE `nv_settings` SET `setting_value` = 'Kitchener, ON N2E 2K2' WHERE `setting_key` = 'studioAddress';
 UPDATE `nv_settings` SET `setting_value` = 'Available worldwide for weddings, editorial campaigns, architectural portfolios, and select creative projects. Based in Kitchener, Ontario, serving Kitchener, Waterloo and Cambridge.' WHERE `setting_key` = 'aboutDesc2';
 UPDATE `nv_settings` SET `setting_value` = 'Wedding, engagement and portrait photographer serving Kitchener, Waterloo and Cambridge, Ontario. Minimal, elegant fine art photography by North Vows.' WHERE `setting_key` = 'siteDesc';
+
+-- Placeholder cleanup (Oct 2026): replace the stock Instagram avatar with the studio logo.
+UPDATE `nv_settings` SET `setting_value` = 'Assets/logo.png' WHERE `setting_key` = 'instaAvatar' AND `setting_value` LIKE '%unsplash.com%';
+-- Remove made-up sample Instagram posts if any were saved to the database.
+DELETE FROM `nv_instagram` WHERE `id` IN ('insta-1','insta-2','insta-3','insta-4','insta-5','insta-6');

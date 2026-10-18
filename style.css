@@ -2428,3 +2428,640 @@ input[type="date"].form-control {
     }
 }
 
+
+/* ==========================================================================
+   Section Intro, Services (full width), Demo Banner
+   ========================================================================== */
+[hidden] {
+    display: none !important;
+}
+
+.section-intro {
+    margin-top: 1rem;
+    max-width: 640px;
+    font-size: 0.95rem;
+    font-weight: 300;
+    line-height: 1.7;
+    color: var(--color-secondary);
+}
+
+.section-intro a {
+    text-decoration: underline;
+}
+
+.services-grid-wide {
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+}
+
+.demo-banner {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 2000;
+    padding: 0.5rem 1rem;
+    background: #3b2f1c;
+    color: #f5e6cc;
+    font-size: 0.75rem;
+    text-align: center;
+    border-top: 1px solid var(--color-accent);
+}
+
+/* ==========================================================================
+   Packages & Pricing
+   ========================================================================== */
+.pricing-section {
+    background-color: var(--bg-card);
+    border-top: 1px solid var(--color-border);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.packages-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    align-items: stretch;
+}
+
+.package-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    padding: 2.5rem 2rem;
+    background-color: var(--bg-dark);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    transition: border-color var(--transition-normal), transform var(--transition-normal);
+}
+
+.package-card:hover {
+    border-color: var(--color-border-focus);
+    transform: translateY(-3px);
+}
+
+.package-card.featured {
+    border-color: var(--color-accent);
+    box-shadow: var(--shadow-md);
+}
+
+.package-badge {
+    position: absolute;
+    top: -0.7rem;
+    left: 2rem;
+    padding: 0.2rem 0.75rem;
+    background-color: var(--color-accent);
+    color: var(--bg-dark);
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    border-radius: var(--radius-full);
+}
+
+.package-name {
+    font-family: var(--font-heading);
+    font-size: 1.35rem;
+    font-weight: 300;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+.package-price {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.4rem;
+    margin: 1.25rem 0 1.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.package-price-note {
+    width: 100%;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--color-secondary);
+}
+
+.package-amount {
+    font-family: var(--font-heading);
+    font-size: 2.5rem;
+    font-weight: 300;
+    line-height: 1;
+    color: var(--color-accent);
+}
+
+.package-amount-text {
+    font-size: 1.75rem;
+}
+
+.package-currency {
+    font-size: 0.8rem;
+    letter-spacing: 0.1em;
+    color: var(--color-secondary);
+}
+
+.package-highlights,
+.package-includes {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.package-highlights {
+    margin-bottom: 1.25rem;
+}
+
+.package-highlights li {
+    font-size: 0.95rem;
+    color: var(--color-primary);
+}
+
+.package-includes {
+    margin-bottom: 2rem;
+}
+
+.package-includes li {
+    position: relative;
+    padding-left: 1.4rem;
+    font-size: 0.85rem;
+    font-weight: 300;
+    line-height: 1.5;
+    color: var(--color-secondary);
+}
+
+.package-includes li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0.45em;
+    width: 0.6rem;
+    height: 0.35rem;
+    border-left: 1.5px solid var(--color-accent);
+    border-bottom: 1.5px solid var(--color-accent);
+    transform: rotate(-45deg);
+}
+
+.package-cta {
+    margin-top: auto;
+    display: block;
+    padding: 0.9rem;
+    text-align: center;
+    border: 1px solid var(--color-accent);
+    border-radius: var(--radius-sm);
+    color: var(--color-accent);
+    font-size: 0.8rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    text-decoration: none;
+    transition: background-color var(--transition-normal), color var(--transition-normal);
+}
+
+.package-cta:hover,
+.package-card.featured .package-cta {
+    background-color: var(--color-accent);
+    color: var(--bg-dark);
+}
+
+/* ==========================================================================
+   Real Wedding Stories
+   ========================================================================== */
+.stories-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 2rem;
+}
+
+.story-card {
+    display: flex;
+    flex-direction: column;
+    background-color: var(--bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+}
+
+.story-cover {
+    aspect-ratio: 3 / 2;
+    overflow: hidden;
+}
+
+.story-cover img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform var(--transition-slow);
+}
+
+.story-card:hover .story-cover img {
+    transform: scale(1.04);
+}
+
+.story-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+    padding: 1.75rem;
+    flex: 1;
+}
+
+.story-meta {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--color-accent);
+}
+
+.story-title {
+    font-family: var(--font-heading);
+    font-size: 1.6rem;
+    font-weight: 300;
+}
+
+.story-summary {
+    font-size: 0.9rem;
+    font-weight: 300;
+    line-height: 1.7;
+    color: var(--color-secondary);
+}
+
+.story-link {
+    align-self: flex-start;
+    margin-top: auto;
+    padding-top: 0.5rem;
+    background: none;
+    color: var(--color-accent);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    cursor: pointer;
+}
+
+.story-link:hover {
+    text-decoration: underline;
+}
+
+/* ==========================================================================
+   Testimonials
+   ========================================================================== */
+.reviews-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.review-card {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    padding: 2rem;
+    background-color: var(--bg-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+}
+
+.review-stars {
+    color: var(--color-accent);
+    letter-spacing: 0.2em;
+    font-size: 0.9rem;
+}
+
+.review-quote {
+    font-family: var(--font-heading);
+    font-size: 1.05rem;
+    font-weight: 300;
+    line-height: 1.7;
+    color: var(--color-primary);
+    flex: 1;
+}
+
+.review-quote::before {
+    content: '\201C';
+}
+
+.review-quote::after {
+    content: '\201D';
+}
+
+.review-author {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--color-border);
+}
+
+.review-avatar {
+    width: 44px;
+    height: 44px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.review-avatar-initials {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--bg-card-hover);
+    border: 1px solid var(--color-border-focus);
+    color: var(--color-accent);
+    font-size: 0.8rem;
+    letter-spacing: 0.05em;
+}
+
+.review-names {
+    display: block;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.review-event {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--color-secondary);
+}
+
+.review-source {
+    margin-left: auto;
+    font-size: 0.7rem;
+    color: var(--color-muted);
+    white-space: nowrap;
+}
+
+.reviews-footer {
+    margin-top: 2.5rem;
+    text-align: center;
+}
+
+.reviews-google-link {
+    color: var(--color-accent);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    text-decoration: none;
+}
+
+.reviews-google-link:hover {
+    text-decoration: underline;
+}
+
+/* ==========================================================================
+   FAQ
+   ========================================================================== */
+.faq-section {
+    border-top: 1px solid var(--color-border);
+}
+
+.faq-wrap {
+    display: grid;
+    grid-template-columns: 1fr 1.6fr;
+    gap: 5rem;
+    align-items: start;
+}
+
+.faq-list {
+    border-top: 1px solid var(--color-border);
+}
+
+.faq-item {
+    border-bottom: 1px solid var(--color-border);
+}
+
+.faq-question {
+    position: relative;
+    padding: 1.4rem 2.5rem 1.4rem 0;
+    font-family: var(--font-heading);
+    font-size: 1.1rem;
+    font-weight: 300;
+    cursor: pointer;
+    list-style: none;
+    transition: color var(--transition-fast);
+}
+
+.faq-question::-webkit-details-marker {
+    display: none;
+}
+
+.faq-question::after {
+    content: '+';
+    position: absolute;
+    right: 0.25rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.4rem;
+    color: var(--color-accent);
+    transition: transform var(--transition-fast);
+}
+
+.faq-item[open] .faq-question::after {
+    transform: translateY(-50%) rotate(45deg);
+}
+
+.faq-question:hover,
+.faq-question:focus-visible {
+    color: var(--color-accent);
+}
+
+.faq-answer {
+    padding: 0 2.5rem 1.5rem 0;
+    font-size: 0.92rem;
+    font-weight: 300;
+    line-height: 1.75;
+    color: var(--color-secondary);
+}
+
+.faq-answer p + p {
+    margin-top: 0.75rem;
+}
+
+@media (max-width: 992px) {
+    .faq-wrap {
+        grid-template-columns: 1fr;
+        gap: 0;
+    }
+}
+
+@media (max-width: 576px) {
+    .stories-grid,
+    .reviews-grid,
+    .packages-grid {
+        grid-template-columns: 1fr;
+    }
+    .package-card {
+        padding: 2.25rem 1.5rem;
+    }
+    .services-grid-wide {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* ==========================================================================
+   Instagram empty state
+   ========================================================================== */
+.instagram-empty {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 3rem 1rem;
+    border: 1px dashed var(--color-border);
+    border-radius: var(--radius-sm);
+    color: var(--color-secondary);
+    text-decoration: none;
+    transition: border-color var(--transition-fast);
+}
+
+.instagram-empty strong {
+    color: var(--color-accent);
+    font-weight: 400;
+    letter-spacing: 0.05em;
+}
+
+.instagram-empty:hover {
+    border-color: var(--color-accent);
+}
+
+/* ==========================================================================
+   Admin: content list editors
+   ========================================================================== */
+.ce-form {
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--color-border);
+}
+
+.ce-form-title {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--color-accent);
+    margin-bottom: 1rem;
+    font-weight: 500;
+}
+
+.ce-full {
+    flex-basis: 100%;
+}
+
+.ce-checkbox {
+    display: flex;
+    align-items: flex-end;
+}
+
+.ce-checkbox label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--color-secondary);
+    cursor: pointer;
+}
+
+.ce-image-row {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.ce-image-row .admin-input {
+    flex: 1;
+}
+
+.admin-table tr.ce-editing {
+    background-color: rgba(197, 168, 128, 0.08);
+}
+
+.action-btn[disabled] {
+    opacity: 0.3;
+    cursor: default;
+}
+
+.admin-btn {
+    white-space: nowrap;
+}
+
+/* The logo is wider than it is tall: show it whole inside the round avatar */
+.instagram-avatar[src$="logo.png"] {
+    object-fit: contain;
+    background-color: var(--bg-dark);
+    padding: 6px;
+}
+
+/* Tailor-made packages block (shown when no fixed packages are set) */
+.package-tailored {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+    align-items: center;
+    border-color: var(--color-accent);
+}
+
+.package-tailored-text {
+    margin-top: 1rem;
+    font-size: 1rem;
+    font-weight: 300;
+    line-height: 1.75;
+    color: var(--color-secondary);
+}
+
+.package-tailored .package-includes {
+    margin-bottom: 1.75rem;
+}
+
+.package-tailored .package-cta {
+    background-color: var(--color-accent);
+    color: var(--bg-dark);
+}
+
+.package-tailored .package-cta:hover {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+}
+
+@media (max-width: 768px) {
+    .package-tailored {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+}
+
+.package-tagline {
+    margin-top: 0.6rem;
+    font-size: 0.9rem;
+    font-weight: 300;
+    line-height: 1.6;
+    color: var(--color-secondary);
+}
+
+.packages-grid {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+/* Tailor-made card spans the full row below the plans */
+.package-tailored {
+    grid-column: 1 / -1;
+    margin-top: 1rem;
+    background: linear-gradient(135deg, rgba(197, 168, 128, 0.08), transparent 60%), var(--bg-dark);
+}
+
+.package-tailored .package-price-note {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--color-accent);
+}
+
+/* One column per plan (max 3) so the row is always filled */
+@media (min-width: 993px) {
+    .packages-grid {
+        grid-template-columns: repeat(var(--plan-cols, 3), 1fr);
+    }
+}
+
+@media (min-width: 577px) and (max-width: 992px) {
+    .packages-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}

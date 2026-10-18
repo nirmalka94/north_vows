@@ -55,8 +55,10 @@
       "priceRange": "$$"
     }
     </script>
+    <script type="application/ld+json" id="faqSchema"></script>
 </head>
 <body>
+    <div class="demo-banner" id="demoBanner" hidden>Preview mode: reviews, stories, portfolio and Instagram show sample content. This is never shown on the live site.</div>
 
     <!-- ==========================================================================
          Navigation Header
@@ -72,9 +74,11 @@
                 <ul class="nav-links" id="navLinks">
                     <li><a href="#home" class="active">Home</a></li>
                     <li><a href="#gallery">Portfolio</a></li>
+                    <li data-nav-for="stories" hidden><a href="#stories">Stories</a></li>
                     <li><a href="#about">About</a></li>
-                    <li><a href="#services">Services</a></li>
-                    <li><a href="#instagram">Featured</a></li>
+                    <li><a href="#pricing">Packages</a></li>
+                    <li data-nav-for="reviews" hidden><a href="#reviews">Reviews</a></li>
+                    <li data-nav-for="faq"><a href="#faq">FAQ</a></li>
                     <li><a href="#contact">Contact</a></li>
                 </ul>
             </nav>
@@ -92,7 +96,7 @@
          ========================================================================== -->
     <section id="home" class="hero">
         <div class="hero-bg">
-            <img src="https://images.unsplash.com/photo-1542038784456-1ea8e935640e?q=80&w=1920" alt="Hero background - Fine Art Photography" class="hero-bg-img" id="heroBgImg">
+            <img alt="" class="hero-bg-img" id="heroBgImg">
         </div>
         <div class="container">
             <div class="hero-content">
@@ -161,6 +165,21 @@
     </section>
 
     <!-- ==========================================================================
+         Real Wedding Stories (hidden until stories are added in admin)
+         ========================================================================== -->
+    <section id="stories" class="section-spacing stories-section" hidden>
+        <div class="container">
+            <div class="section-title-wrap">
+                <span class="section-subtitle">Real Weddings</span>
+                <h2 class="section-title">Love Stories</h2>
+            </div>
+            <div class="stories-grid" id="storiesGrid">
+                <!-- Dynamic stories loaded by JS -->
+            </div>
+        </div>
+    </section>
+
+    <!-- ==========================================================================
          About Section (Photographer)
          ========================================================================== -->
     <section id="about" class="section-spacing">
@@ -191,76 +210,82 @@
         <div class="container">
             <div class="section-title-wrap">
                 <span class="section-subtitle">What We Offer</span>
-                <h2 class="section-title">Services & Investment</h2>
+                <h2 class="section-title">Services</h2>
             </div>
             
-            <div class="services-pricing-wrap">
-                <!-- Services Column -->
-                <div class="services-list-container">
-                    <h3 class="services-heading">Creative Services</h3>
-                    <div class="services-grid">
-                        <div class="service-card">
-                            <span class="service-category">Weddings</span>
-                            <h4 class="service-name">Pre wedding</h4>
-                        </div>
-                        <div class="service-card">
-                            <span class="service-category">Weddings</span>
-                            <h4 class="service-name">Wedding</h4>
-                        </div>
-                        <div class="service-card">
-                            <span class="service-category">Weddings</span>
-                            <h4 class="service-name">Intimate Functions</h4>
-                        </div>
-                        
-                        <div class="service-card">
-                            <span class="service-category">Portraits</span>
-                            <h4 class="service-name">Couple Portraits</h4>
-                        </div>
-                        <div class="service-card">
-                            <span class="service-category">Portraits</span>
-                            <h4 class="service-name">Solo portraits</h4>
-                        </div>
-                        <div class="service-card">
-                            <span class="service-category">Portraits</span>
-                            <h4 class="service-name">Family session</h4>
-                        </div>
-                        <div class="service-card">
-                            <span class="service-category">Portraits</span>
-                            <h4 class="service-name">Pet session</h4>
-                        </div>
-                        
-                        <div class="service-card">
-                            <span class="service-category">Professional</span>
-                            <h4 class="service-name">Professional headshots</h4>
-                        </div>
-                        <div class="service-card">
-                            <span class="service-category">Professional</span>
-                            <h4 class="service-name">Graduation and prom</h4>
-                        </div>
-                    </div>
+            <div class="services-grid services-grid-wide">
+                <div class="service-card">
+                    <span class="service-category">Weddings</span>
+                    <h4 class="service-name">Pre wedding</h4>
+                </div>
+                <div class="service-card">
+                    <span class="service-category">Weddings</span>
+                    <h4 class="service-name">Wedding</h4>
+                </div>
+                <div class="service-card">
+                    <span class="service-category">Weddings</span>
+                    <h4 class="service-name">Intimate Functions</h4>
                 </div>
                 
-                <!-- Investment Pricing Column -->
-                <div class="investment-pricing-container">
-                    <h3 class="services-heading">Investment</h3>
-                    <div class="pricing-card">
-                        <div class="pricing-tier">
-                            <span class="tier-label">Creative Sessions</span>
-                            <h4 class="tier-price">Starting from $<span id="rateSessionDisplay">250</span></h4>
-                            <p class="tier-desc">Includes a tailored photoshoot session, locations guidance, and 25 professionally edited high-resolution pictures.</p>
-                        </div>
-                        <div class="pricing-tier-divider"></div>
-                        <div class="pricing-tier">
-                            <span class="tier-label">Wedding Packages</span>
-                            <h4 class="tier-price">Starting from $<span id="rateWeddingDisplay">500</span></h4>
-                            <p class="tier-desc">Comprehensive visual coverage of your special day, custom planning assistance, and full digital gallery delivery.</p>
-                        </div>
-                        
-                        <div class="pricing-action">
-                            <a href="#contact" class="pricing-cta">Inquire For Details</a>
-                        </div>
-                    </div>
+                <div class="service-card">
+                    <span class="service-category">Portraits</span>
+                    <h4 class="service-name">Couple Portraits</h4>
                 </div>
+                <div class="service-card">
+                    <span class="service-category">Portraits</span>
+                    <h4 class="service-name">Solo portraits</h4>
+                </div>
+                <div class="service-card">
+                    <span class="service-category">Portraits</span>
+                    <h4 class="service-name">Family session</h4>
+                </div>
+                <div class="service-card">
+                    <span class="service-category">Portraits</span>
+                    <h4 class="service-name">Pet session</h4>
+                </div>
+                
+                <div class="service-card">
+                    <span class="service-category">Professional</span>
+                    <h4 class="service-name">Professional headshots</h4>
+                </div>
+                <div class="service-card">
+                    <span class="service-category">Professional</span>
+                    <h4 class="service-name">Graduation and prom</h4>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==========================================================================
+         Packages (tailor-made block, or fixed packages if added in admin)
+         ========================================================================== -->
+    <section id="pricing" class="section-spacing pricing-section">
+        <div class="container">
+            <div class="section-title-wrap">
+                <span class="section-subtitle">Investment</span>
+                <h2 class="section-title">Packages</h2>
+                <p class="section-intro">Simple starting prices for our most popular sessions. Every plan can be customised to what you need, and any other event gets a package made just for it. All prices are in Canadian dollars (CAD).</p>
+            </div>
+            <div class="packages-grid" id="packagesGrid">
+                <!-- Dynamic packages loaded by JS -->
+            </div>
+        </div>
+    </section>
+
+    <!-- ==========================================================================
+         Testimonials (hidden until reviews are added in admin)
+         ========================================================================== -->
+    <section id="reviews" class="section-spacing reviews-section" hidden>
+        <div class="container">
+            <div class="section-title-wrap">
+                <span class="section-subtitle">Kind Words</span>
+                <h2 class="section-title">What Our Clients Say</h2>
+            </div>
+            <div class="reviews-grid" id="reviewsGrid">
+                <!-- Dynamic reviews loaded by JS -->
+            </div>
+            <div class="reviews-footer" id="reviewsFooter" hidden>
+                <a href="#" id="googleReviewsLink" class="reviews-google-link" target="_blank" rel="noopener noreferrer">Read all our reviews on Google &rarr;</a>
             </div>
         </div>
     </section>
@@ -272,7 +297,7 @@
         <div class="container">
             <div class="instagram-header">
                 <div class="instagram-profile">
-                    <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=150" alt="Instagram Profile Avatar" class="instagram-avatar" id="instaAvatar">
+                    <img src="Assets/logo.png" alt="North Vows Instagram profile" class="instagram-avatar" id="instaAvatar">
                     <div class="instagram-meta">
                         <span class="handle" id="instaHandle">@northvows_photo</span>
                         <span class="subtitle">Latest works & updates</span>
@@ -291,6 +316,24 @@
             <!-- Instagram Grid -->
             <div class="instagram-grid" id="instagramGrid">
                 <!-- Dynamic items loaded by JS -->
+            </div>
+        </div>
+    </section>
+
+    <!-- ==========================================================================
+         FAQ
+         ========================================================================== -->
+    <section id="faq" class="section-spacing faq-section">
+        <div class="container">
+            <div class="faq-wrap">
+                <div class="section-title-wrap">
+                    <span class="section-subtitle">Good To Know</span>
+                    <h2 class="section-title">Frequently Asked Questions</h2>
+                    <p class="section-intro">Can't find your answer? <a href="#contact" class="text-accent">Send us a message</a> and we'll reply within a day.</p>
+                </div>
+                <div class="faq-list" id="faqList">
+                    <!-- Dynamic FAQ loaded by JS -->
+                </div>
             </div>
         </div>
     </section>
@@ -552,6 +595,14 @@
                             </button>
                         </li>
                         <li>
+                            <button class="admin-tab-btn" data-tab="tab-content">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                                </svg>
+                                <span class="admin-tab-text">Pricing, Reviews &amp; FAQ</span>
+                            </button>
+                        </li>
+                        <li>
                             <button class="admin-tab-btn" data-tab="tab-seo">
                                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path>
@@ -756,7 +807,7 @@
                                     </div>
                                     <div class="admin-flex-col">
                                         <label class="form-label" for="editInstaAvatar">Profile Avatar URL</label>
-                                        <input type="url" id="editInstaAvatar" class="admin-input" placeholder="https://images.unsplash.com/... or other avatar URL" required>
+                                        <input type="url" id="editInstaAvatar" class="admin-input" placeholder="Assets/logo.png or an image URL" required>
                                     </div>
                                 </div>
                                 <button type="submit" class="admin-btn" style="margin-top:0.5rem;">Save Profile Settings</button>
@@ -764,7 +815,7 @@
                         </form>
 
                         <div class="admin-card">
-                            <h3 style="margin-bottom:1.25rem; font-size:1.1rem; text-transform:uppercase; letter-spacing:0.05em;">Add Mock Instagram Post</h3>
+                            <h3 style="margin-bottom:1.25rem; font-size:1.1rem; text-transform:uppercase; letter-spacing:0.05em;">Add Instagram Post Manually</h3>
                             <form id="instaAddPostForm" class="admin-flex-row" style="align-items:flex-end;">
                                 <div class="admin-flex-col">
                                     <label class="form-label" for="newInstaImg">Photo URL</label>
@@ -774,9 +825,9 @@
                                     <label class="form-label" for="newInstaCaption">Caption</label>
                                     <input type="text" id="newInstaCaption" class="admin-input" placeholder="Write caption details..." required>
                                 </div>
-                                <div class="admin-flex-col" style="max-width:120px; min-width:80px;">
-                                    <label class="form-label" for="newInstaLikes">Likes</label>
-                                    <input type="number" id="newInstaLikes" class="admin-input" value="124" min="0" required>
+                                <div class="admin-flex-col">
+                                    <label class="form-label" for="newInstaPostUrl">Post Link (optional)</label>
+                                    <input type="url" id="newInstaPostUrl" class="admin-input" placeholder="https://www.instagram.com/p/...">
                                 </div>
                                 <div class="admin-flex-col" style="flex:0; min-width:auto;">
                                     <button type="submit" class="admin-btn">Add Post</button>
@@ -791,7 +842,7 @@
                                     <tr>
                                         <th>Thumbnail</th>
                                         <th>Caption Preview</th>
-                                        <th>Likes Count</th>
+                                        <th>Post Link</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
@@ -799,6 +850,28 @@
                                     <!-- Dynamic rows -->
                                 </tbody>
                             </table>
+                        </div>
+                    </div>
+
+                    <!-- Packages, testimonials, wedding stories and FAQ editors -->
+                    <div class="admin-view" id="tab-content">
+                        <div class="admin-view-title">
+                            <span>Pricing, Reviews, Stories &amp; FAQ</span>
+                        </div>
+                        <div class="admin-card">
+                            <h3 style="margin-bottom:1.25rem; font-size:1.1rem; text-transform:uppercase; letter-spacing:0.05em;">Google Reviews Link</h3>
+                            <form id="googleReviewsForm" class="admin-flex-row" style="align-items:flex-end;">
+                                <div class="admin-flex-col">
+                                    <label class="form-label" for="settingGoogleReviewsUrl">Link to your Google Business reviews (optional)</label>
+                                    <input type="url" id="settingGoogleReviewsUrl" class="admin-input" placeholder="https://g.page/r/...">
+                                </div>
+                                <div class="admin-flex-col" style="flex:0; min-width:auto;">
+                                    <button type="submit" class="admin-btn">Save Link</button>
+                                </div>
+                            </form>
+                        </div>
+                        <div id="contentEditors">
+                            <!-- Editors generated by JS -->
                         </div>
                     </div>
 
@@ -917,28 +990,13 @@
                                 </div>
 
                                 <div class="admin-group-title" style="margin-top:2.5rem; margin-bottom:1rem; border-top: 1px solid var(--color-border); padding-top: 2rem;">
-                                    <h3 style="font-size:1.1rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--color-accent);">Investment Settings</h3>
-                                </div>
-
-                                <div class="admin-flex-row">
-                                    <div class="admin-flex-col">
-                                        <label class="form-label" for="settingRateSession">Session Package Rate ($)</label>
-                                        <input type="text" id="settingRateSession" class="admin-input" placeholder="e.g. 250" required>
-                                    </div>
-                                    <div class="admin-flex-col">
-                                        <label class="form-label" for="settingRateWedding">Wedding Package Rate ($)</label>
-                                        <input type="text" id="settingRateWedding" class="admin-input" placeholder="e.g. 500" required>
-                                    </div>
-                                </div>
-
-                                <div class="admin-group-title" style="margin-top:2.5rem; margin-bottom:1rem; border-top: 1px solid var(--color-border); padding-top: 2rem;">
                                     <h3 style="font-size:1.1rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--color-accent);">WhatsApp Booking Settings</h3>
                                 </div>
 
                                 <div class="admin-flex-row">
                                     <div class="admin-flex-col">
-                                        <label class="form-label" for="settingWhatsappNumber">WhatsApp Number (including country code, e.g. +447700900077)</label>
-                                        <input type="text" id="settingWhatsappNumber" class="admin-input" placeholder="e.g. +447700900077" required>
+                                        <label class="form-label" for="settingWhatsappNumber">WhatsApp Number (including country code, e.g. +12269894884)</label>
+                                        <input type="text" id="settingWhatsappNumber" class="admin-input" placeholder="e.g. +12269894884" required>
                                     </div>
                                 </div>
 
@@ -970,7 +1028,7 @@
 
                         <div class="admin-card">
                             <h3 style="margin-bottom:0.5rem; font-size:1.1rem; text-transform:uppercase; letter-spacing:0.05em;">Export / Import Configurations</h3>
-                            <p style="font-size:0.85rem; color:var(--color-secondary); margin-bottom:1.5rem;">Since your uploads and modifications are stored inside the visitor's browser (IndexedDB), you can export the configuration to download the assets. You can copy the exported details into the database on another computer, or compile them into your codebase for permanent static file deployments.</p>
+                            <p style="font-size:0.85rem; color:var(--color-secondary); margin-bottom:1.5rem;">Download a JSON backup of all albums, photos, Instagram posts and settings stored in the database, or restore one.</p>
                             
                             <div class="admin-flex-row" style="gap:1rem;">
                                 <button id="btnExportConfig" class="admin-btn btn-outline" type="button">
@@ -989,7 +1047,7 @@
                                     </svg>
                                     Import Database JSON
                                 </button>
-                                <button id="btnResetDatabase" class="admin-btn btn-danger" type="button">Reset to Sample Data</button>
+                                <button id="btnResetDatabase" class="admin-btn btn-danger" type="button">Reset to Defaults</button>
                             </div>
                             
                             <div id="importArea" style="display:none; margin-top:1.5rem;">
