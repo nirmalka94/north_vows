@@ -49,6 +49,10 @@
       "description": "Wedding, family and portrait photographer in Kitchener, Waterloo and Cambridge, Ontario. Natural, timeless photography for clients across Canada.",
       "url": "https://northvowsphotography.com/",
       "email": "thenorthvows@gmail.com",
+      "sameAs": [
+        "https://www.instagram.com/thenorthvows",
+        "https://www.facebook.com/Northvowsphotography"
+      ],
       "telephone": "+1-226-989-4884",
       "address": {
         "@type": "PostalAddress",
@@ -91,6 +95,12 @@
                     <li data-nav-for="reviews" hidden><a href="#reviews">Reviews</a></li>
                     <li data-nav-for="faq"><a href="#faq">FAQ</a></li>
                     <li><a href="#contact">Contact</a></li>
+                    <li class="nav-social">
+                        <div class="social-links">
+                        <a class="social-btn" href="https://www.instagram.com/thenorthvows" target="_blank" rel="noopener noreferrer" aria-label="North Vows on Instagram" data-social="instagram"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg></a>
+                        <a class="social-btn" href="https://www.facebook.com/Northvowsphotography" target="_blank" rel="noopener noreferrer" aria-label="North Vows on Facebook" data-social="facebook"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg></a>
+                    </div>
+                    </li>
                 </ul>
             </nav>
 
@@ -115,6 +125,7 @@
                 // Show the last-known hero image straight away instead of waiting for the API
                 try { var h = localStorage.getItem('nv_hero'); if (h) document.getElementById('heroBgImg').src = h; } catch (e) {}
             </script>
+            <div class="hero-slides" id="heroSlides" aria-hidden="true"></div>
         </div>
         <div class="container">
             <div class="hero-content">
@@ -128,6 +139,11 @@
                         <polyline points="12 5 19 12 12 19"></polyline>
                     </svg>
                 </a>
+            </div>
+            <!-- Framed photo slider (desktop); filled from Photo_carousel by JS -->
+            <div class="hero-frame" id="heroFrame" hidden>
+                <div class="hero-frame-slides" id="heroFrameSlides"></div>
+                <div class="hero-dots" id="heroDots" role="group" aria-label="Choose hero photo"></div>
             </div>
         </div>
         <div class="scroll-indicator">
@@ -168,6 +184,21 @@
             <div class="section-title-wrap">
                 <span class="section-subtitle">Selected Stories</span>
                 <h2 class="section-title">Portfolio</h2>
+            </div>
+
+            <!-- Photo carousel (one tab per folder in Photo_carousel) -->
+            <div class="photo-carousel" id="photoCarousel" hidden>
+                <div class="carousel-tabs" id="carouselTabs" role="tablist" aria-label="Photo categories"></div>
+                <div class="carousel-viewport">
+                    <button type="button" class="carousel-arrow carousel-prev" id="carouselPrev" aria-label="Previous photos">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                    </button>
+                    <div class="carousel-track" id="carouselTrack" role="tabpanel" tabindex="0" aria-label="Photos"></div>
+                    <button type="button" class="carousel-arrow carousel-next" id="carouselNext" aria-label="Next photos">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                    </button>
+                </div>
+                <div class="carousel-progress"><span id="carouselProgress"></span></div>
             </div>
 
             <!-- Categories / Album Filters -->
@@ -233,60 +264,105 @@
             </div>
             
             <div class="services-grid services-grid-wide">
-                <button type="button" class="service-card" data-event-type="Pre-wedding">
-                    <span class="service-category">Weddings</span>
-                    <h3 class="service-name">Pre wedding</h3>
-                    <p class="service-desc">Engagement and pre-wedding shoots at a place you love.</p>
-                    <span class="service-link">Enquire &rarr;</span>
-                </button>
-                <button type="button" class="service-card" data-event-type="Wedding">
-                    <span class="service-category">Weddings</span>
-                    <h3 class="service-name">Wedding</h3>
-                    <p class="service-desc">Your wedding day, told naturally from start to finish.</p>
-                    <span class="service-link">Enquire &rarr;</span>
-                </button>
-                <button type="button" class="service-card" data-event-type="Intimate Function">
-                    <span class="service-category">Weddings</span>
-                    <h3 class="service-name">Intimate Functions</h3>
-                    <p class="service-desc">Small weddings, elopements, anniversaries and celebrations.</p>
-                    <span class="service-link">Enquire &rarr;</span>
-                </button>
-                <button type="button" class="service-card" data-event-type="Couple Portrait">
-                    <span class="service-category">Portraits</span>
-                    <h3 class="service-name">Couple Portraits</h3>
-                    <p class="service-desc">Relaxed, guided sessions for the two of you.</p>
-                    <span class="service-link">Enquire &rarr;</span>
-                </button>
-                <button type="button" class="service-card" data-event-type="Solo Portrait">
-                    <span class="service-category">Portraits</span>
-                    <h3 class="service-name">Solo Portraits</h3>
-                    <p class="service-desc">Personal portraits, birthdays and creative shoots.</p>
-                    <span class="service-link">Enquire &rarr;</span>
-                </button>
-                <button type="button" class="service-card" data-event-type="Family Session">
-                    <span class="service-category">Portraits</span>
-                    <h3 class="service-name">Family Sessions</h3>
-                    <p class="service-desc">Families of every size, kids and grandparents welcome.</p>
-                    <span class="service-link">Enquire &rarr;</span>
-                </button>
-                <button type="button" class="service-card" data-event-type="Pet Session">
-                    <span class="service-category">Portraits</span>
-                    <h3 class="service-name">Pet Sessions</h3>
-                    <p class="service-desc">Your furry family members at their best.</p>
-                    <span class="service-link">Enquire &rarr;</span>
-                </button>
-                <button type="button" class="service-card" data-event-type="Professional Headshot">
-                    <span class="service-category">Professional</span>
-                    <h3 class="service-name">Professional Headshots</h3>
-                    <p class="service-desc">Clean, confident headshots for work and LinkedIn.</p>
-                    <span class="service-link">Enquire &rarr;</span>
-                </button>
-                <button type="button" class="service-card" data-event-type="Graduation / Prom">
-                    <span class="service-category">Professional</span>
-                    <h3 class="service-name">Graduation &amp; Prom</h3>
-                    <p class="service-desc">Celebrate the milestone with photos you will keep.</p>
-                    <span class="service-link">Enquire &rarr;</span>
-                </button>
+                <div class="service-card" data-event-type="Pre-wedding">
+                    <button type="button" class="service-head" aria-expanded="false" aria-controls="service-body-1">
+                        <span class="service-category">Weddings</span>
+                        <span class="service-name">Pre wedding</span>
+                        <span class="service-chevron" aria-hidden="true"></span>
+                    </button>
+                    <div class="service-body" id="service-body-1">
+                        <p class="service-desc">Engagement and pre-wedding shoots at a place you love.</p>
+                        <button type="button" class="service-link">Enquire &rarr;</button>
+                    </div>
+                </div>
+                <div class="service-card" data-event-type="Wedding">
+                    <button type="button" class="service-head" aria-expanded="false" aria-controls="service-body-2">
+                        <span class="service-category">Weddings</span>
+                        <span class="service-name">Wedding</span>
+                        <span class="service-chevron" aria-hidden="true"></span>
+                    </button>
+                    <div class="service-body" id="service-body-2">
+                        <p class="service-desc">Your wedding day, told naturally from start to finish.</p>
+                        <button type="button" class="service-link">Enquire &rarr;</button>
+                    </div>
+                </div>
+                <div class="service-card" data-event-type="Intimate Function">
+                    <button type="button" class="service-head" aria-expanded="false" aria-controls="service-body-3">
+                        <span class="service-category">Weddings</span>
+                        <span class="service-name">Intimate Functions</span>
+                        <span class="service-chevron" aria-hidden="true"></span>
+                    </button>
+                    <div class="service-body" id="service-body-3">
+                        <p class="service-desc">Small weddings, elopements, anniversaries and celebrations.</p>
+                        <button type="button" class="service-link">Enquire &rarr;</button>
+                    </div>
+                </div>
+                <div class="service-card" data-event-type="Couple Portrait">
+                    <button type="button" class="service-head" aria-expanded="false" aria-controls="service-body-4">
+                        <span class="service-category">Portraits</span>
+                        <span class="service-name">Couple Portraits</span>
+                        <span class="service-chevron" aria-hidden="true"></span>
+                    </button>
+                    <div class="service-body" id="service-body-4">
+                        <p class="service-desc">Relaxed, guided sessions for the two of you.</p>
+                        <button type="button" class="service-link">Enquire &rarr;</button>
+                    </div>
+                </div>
+                <div class="service-card" data-event-type="Solo Portrait">
+                    <button type="button" class="service-head" aria-expanded="false" aria-controls="service-body-5">
+                        <span class="service-category">Portraits</span>
+                        <span class="service-name">Solo Portraits</span>
+                        <span class="service-chevron" aria-hidden="true"></span>
+                    </button>
+                    <div class="service-body" id="service-body-5">
+                        <p class="service-desc">Personal portraits, birthdays and creative shoots.</p>
+                        <button type="button" class="service-link">Enquire &rarr;</button>
+                    </div>
+                </div>
+                <div class="service-card" data-event-type="Family Session">
+                    <button type="button" class="service-head" aria-expanded="false" aria-controls="service-body-6">
+                        <span class="service-category">Portraits</span>
+                        <span class="service-name">Family Sessions</span>
+                        <span class="service-chevron" aria-hidden="true"></span>
+                    </button>
+                    <div class="service-body" id="service-body-6">
+                        <p class="service-desc">Families of every size, kids and grandparents welcome.</p>
+                        <button type="button" class="service-link">Enquire &rarr;</button>
+                    </div>
+                </div>
+                <div class="service-card" data-event-type="Pet Session">
+                    <button type="button" class="service-head" aria-expanded="false" aria-controls="service-body-7">
+                        <span class="service-category">Portraits</span>
+                        <span class="service-name">Pet Sessions</span>
+                        <span class="service-chevron" aria-hidden="true"></span>
+                    </button>
+                    <div class="service-body" id="service-body-7">
+                        <p class="service-desc">Your furry family members at their best.</p>
+                        <button type="button" class="service-link">Enquire &rarr;</button>
+                    </div>
+                </div>
+                <div class="service-card" data-event-type="Professional Headshot">
+                    <button type="button" class="service-head" aria-expanded="false" aria-controls="service-body-8">
+                        <span class="service-category">Professional</span>
+                        <span class="service-name">Professional Headshots</span>
+                        <span class="service-chevron" aria-hidden="true"></span>
+                    </button>
+                    <div class="service-body" id="service-body-8">
+                        <p class="service-desc">Clean, confident headshots for work and LinkedIn.</p>
+                        <button type="button" class="service-link">Enquire &rarr;</button>
+                    </div>
+                </div>
+                <div class="service-card" data-event-type="Graduation / Prom">
+                    <button type="button" class="service-head" aria-expanded="false" aria-controls="service-body-9">
+                        <span class="service-category">Professional</span>
+                        <span class="service-name">Graduation &amp; Prom</span>
+                        <span class="service-chevron" aria-hidden="true"></span>
+                    </button>
+                    <div class="service-body" id="service-body-9">
+                        <p class="service-desc">Celebrate the milestone with photos you will keep.</p>
+                        <button type="button" class="service-link">Enquire &rarr;</button>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
@@ -297,7 +373,7 @@
     <section id="pricing" class="section-spacing pricing-section section-light">
         <div class="container">
             <div class="section-title-wrap">
-                <span class="section-subtitle">Investment</span>
+                <span class="section-subtitle">Pricing</span>
                 <h2 class="section-title">Packages</h2>
                 <p class="section-intro">Simple starting prices for our most popular sessions. Every plan can be customised to what you need, and any other event gets a package made just for it. All prices are in Canadian dollars (CAD).</p>
             </div>
@@ -334,11 +410,12 @@
                 <div class="instagram-profile">
                     <img src="Assets/logo.png" alt="North Vows Instagram profile" class="instagram-avatar" id="instaAvatar">
                     <div class="instagram-meta">
-                        <span class="handle" id="instaHandle">@northvows_photo</span>
+                        <span class="handle" id="instaHandle">@thenorthvows</span>
                         <span class="subtitle">Latest works & updates</span>
                     </div>
                 </div>
-                <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="instagram-follow-btn" id="instaFollowBtn">
+                <div class="instagram-actions">
+                    <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" class="instagram-follow-btn" id="instaFollowBtn">
                     Follow
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
@@ -346,6 +423,11 @@
                         <rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect>
                     </svg>
                 </a>
+                    <a href="https://www.facebook.com/Northvowsphotography" target="_blank" rel="noopener noreferrer" class="instagram-follow-btn" data-social="facebook">
+                        Facebook
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg>
+                    </a>
+                </div>
             </div>
 
             <!-- Instagram Grid -->
@@ -366,6 +448,9 @@
                     <h2 class="section-title">Frequently Asked Questions</h2>
                     <p class="section-intro">Can't find your answer? <a href="#contact" class="text-accent">Send us a message</a> and we'll get back to you shortly.</p>
                 </div>
+                <button type="button" class="faq-toggle" id="faqToggle" aria-expanded="false" aria-controls="faqList">
+                    <span>Show questions</span>
+                </button>
                 <div class="faq-list" id="faqList">
                     <!-- Dynamic FAQ loaded by JS -->
                 </div>
@@ -413,7 +498,7 @@
                             </div>
                             <div class="contact-detail-text">
                                 <span class="detail-label">Follow Us</span>
-                                <a class="detail-value" id="contactInstaHandleDisplay" data-contact="instagram" href="https://instagram.com/northvows_photo" target="_blank" rel="noopener noreferrer">@northvows_photo</a>
+                                <a class="detail-value" id="contactInstaHandleDisplay" data-contact="instagram" href="https://instagram.com/thenorthvows" target="_blank" rel="noopener noreferrer">@thenorthvows</a>
                             </div>
                         </div>
                         
@@ -443,6 +528,10 @@
                             </div>
                         </div>
                     </div>
+                    <div class="social-links contact-social">
+                        <a class="social-btn" href="https://www.instagram.com/thenorthvows" target="_blank" rel="noopener noreferrer" aria-label="North Vows on Instagram" data-social="instagram"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg></a>
+                        <a class="social-btn" href="https://www.facebook.com/Northvowsphotography" target="_blank" rel="noopener noreferrer" aria-label="North Vows on Facebook" data-social="facebook"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg></a>
+                    </div>
                 </div>
                 
                 <!-- Form Column -->
@@ -454,15 +543,14 @@
                         </div>
                         <div class="form-row-2">
                             <div class="form-group">
-                                <label for="contactEmail" class="form-label">Email Address</label>
-                                <input type="email" id="contactEmail" name="email" class="form-control" placeholder="e.g. eleanor@example.com" autocomplete="email" aria-describedby="contactReachHint">
+                                <label for="contactEmail" class="form-label">Email Address <span style="color:var(--color-muted); font-size:0.65rem;">(optional)</span></label>
+                                <input type="email" id="contactEmail" name="email" class="form-control" placeholder="e.g. eleanor@example.com" autocomplete="email">
                             </div>
                             <div class="form-group">
-                                <label for="contactPhone" class="form-label">Phone Number</label>
-                                <input type="tel" id="contactPhone" name="phone" class="form-control" placeholder="e.g. 226 555 0123" autocomplete="tel" aria-describedby="contactReachHint">
+                                <label for="contactPhone" class="form-label">Phone Number <span style="color:var(--color-muted); font-size:0.65rem;">(optional)</span></label>
+                                <input type="tel" id="contactPhone" name="phone" class="form-control" placeholder="e.g. 226 555 0123" autocomplete="tel">
                             </div>
                         </div>
-                        <p class="form-hint" id="contactReachHint">Please give us an email address or a phone number so we can reply.</p>
                         <div class="form-row-2">
                             <div class="form-group">
                                 <label for="contactEventType" class="form-label">Event Type <span style="color:var(--color-muted); font-size:0.65rem;">(optional)</span></label>
@@ -499,23 +587,18 @@
                             <label for="contactMessage" class="form-label">Tell Us About Your Project</label>
                             <textarea id="contactMessage" name="message" class="form-control" placeholder="Location, ideas, or anything else you'd like us to know…"></textarea>
                         </div>
-                        <!-- Honeypot: hidden from people, filled in by spam bots -->
-                        <input type="text" name="website" id="contactWebsite" class="hp-field" tabindex="-1" autocomplete="off" aria-hidden="true">
-                        <div class="submit-row">
-                            <button type="submit" class="submit-btn" id="submitEmailBtn" value="email">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:18px;height:18px;flex-shrink:0;">
-                                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                                    <polyline points="22,6 12,13 2,6"></polyline>
-                                </svg>
-                                Send by Email
-                            </button>
-                            <button type="submit" class="submit-btn whatsapp-submit-btn" id="submitBtn" value="whatsapp">
+                        <button type="submit" class="submit-btn whatsapp-submit-btn" id="submitBtn">
                                 <svg viewBox="0 0 24 24" fill="currentColor" style="width:18px;height:18px;flex-shrink:0;">
                                     <path d="M12.012 2c-5.506 0-9.988 4.482-9.988 9.988 0 1.76.459 3.473 1.332 4.985L2 22l5.176-1.358a9.89 9.89 0 0 0 4.836 1.258c5.506 0 9.988-4.482 9.988-9.988C22.001 6.482 17.519 2 12.012 2zm0 1.838c4.5 0 8.153 3.653 8.153 8.15c0 4.5-3.653 8.15-8.153 8.15a8.109 8.109 0 0 1-4.148-1.127l-.297-.177-3.076.807.82-3.003-.194-.309a8.103 8.103 0 0 1-1.305-4.348c0-4.5 3.653-8.15 8.153-8.15zm-1.897 2.923c-.172 0-.363.045-.526.12-.164.076-.298.182-.399.324-.469.608-.707 1.341-.707 2.193 0 .769.199 1.517.59 2.222a7.6 7.6 0 0 0 2.221 2.592c.677.518 1.436.883 2.25 1.082.385.093.774.137 1.157.137.608 0 1.157-.14 1.62-.416.48-.286.726-.745.726-1.353 0-.155-.078-.291-.233-.369l-1.926-.963c-.156-.078-.337-.038-.456.104l-.565.688c-.14.168-.344.202-.533.102a5.4 5.4 0 0 1-1.748-1.547 5.25 5.25 0 0 1-.951-1.688c-.066-.192-.016-.381.127-.524l.412-.412c.078-.078.118-.182.118-.286V7.472c0-.129-.065-.245-.195-.31l-1.63-.815a.398.398 0 0 0-.179-.044z"/>
                                 </svg>
                                 Send via WhatsApp
                             </button>
-                        </div>
+                        <p class="form-note">Opens WhatsApp with your enquiry pre-filled — no app needed on desktop.</p>
+                        <p class="form-direct">Prefer email or a call?
+                            <a data-contact="email" href="mailto:thenorthvows@gmail.com">thenorthvows@gmail.com</a>
+                            <span aria-hidden="true">·</span>
+                            <a data-contact="phone" href="tel:+12269894884">+1 (226) 989-4884</a>
+                        </p>
                         <p class="form-status" id="formStatus" role="status" aria-live="polite"></p>
                     </form>
                 </div>
@@ -534,6 +617,10 @@
                     <span class="logo-text">North Vows</span>
                 </a>
                 <p>Wedding, family and portrait photography in Kitchener, Waterloo and Cambridge, Ontario. Serving clients across Canada.</p>
+                <div class="social-links footer-social">
+                        <a class="social-btn" href="https://www.instagram.com/thenorthvows" target="_blank" rel="noopener noreferrer" aria-label="North Vows on Instagram" data-social="instagram"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg></a>
+                        <a class="social-btn" href="https://www.facebook.com/Northvowsphotography" target="_blank" rel="noopener noreferrer" aria-label="North Vows on Facebook" data-social="facebook"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"></path></svg></a>
+                    </div>
             </div>
             <nav class="footer-col" aria-label="Footer">
                 <h2 class="footer-heading">Explore</h2>
@@ -550,7 +637,8 @@
                 <ul class="footer-list">
                     <li><a data-contact="email" href="mailto:thenorthvows@gmail.com">thenorthvows@gmail.com</a></li>
                     <li><a data-contact="phone" href="tel:+12269894884">+1 (226) 989-4884</a></li>
-                    <li><a data-contact="instagram" href="https://instagram.com/northvows_photo" target="_blank" rel="noopener noreferrer">@northvows_photo</a></li>
+                    <li><a data-contact="instagram" href="https://instagram.com/thenorthvows" target="_blank" rel="noopener noreferrer">@thenorthvows</a></li>
+                    <li><a href="https://www.facebook.com/Northvowsphotography" target="_blank" rel="noopener noreferrer">Facebook</a></li>
                     <li><span>Kitchener, ON · Canada</span></li>
                 </ul>
             </div>
@@ -1052,7 +1140,7 @@
                                         <input type="text" id="settingStudioPhone" class="admin-input" placeholder="e.g. +1 (226) 989-4884" required>
                                     </div>
                                     <div class="admin-flex-col">
-                                        <label class="form-label" for="settingStudioEmail">Studio Email (receives website enquiries)</label>
+                                        <label class="form-label" for="settingStudioEmail">Studio Email</label>
                                         <input type="email" id="settingStudioEmail" class="admin-input" placeholder="e.g. hello@northvowsphotography.com" required>
                                     </div>
                                     <div class="admin-flex-col">

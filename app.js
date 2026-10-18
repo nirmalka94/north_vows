@@ -81,15 +81,6 @@ class APIManager {
         fd.append('file', await compressImage(file));
         return this._postForm('upload_image', fd);
     }
-
-    // Public contact form → emailed to the studio
-    sendEnquiry(enquiry) {
-        return fetch(`${API_BASE}?action=send_enquiry`, {
-            method:  'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body:    JSON.stringify(enquiry),
-        }).then(r => r.json());
-    }
 }
 
 const db = new APIManager();
@@ -255,7 +246,7 @@ const DEFAULT_SETTINGS = {
     aboutTitle: 'We believe in quiet, meaningful details.',
     aboutDesc1: 'North Vows was founded on the philosophy of visual simplicity. We step back to let moments unfold naturally, focusing on light, space, and quiet connections that often go unnoticed in the rush of life.',
     aboutDesc2: 'We photograph weddings, families, portraits and professional headshots across Canada. Based in Kitchener, Ontario, we serve Kitchener, Waterloo, Cambridge and the surrounding region.',
-    instaHandle: '@northvows_photo',
+    instaHandle: '@thenorthvows',
     instaAvatar: 'Assets/logo.png',
     whatsappNumber: '+12269894884',
     whatsappMessage: 'Hello North Vows, I would like to book a photography appointment.',
@@ -383,6 +374,9 @@ function applyDemoContent() {
 document.addEventListener('DOMContentLoaded', async () => {
     // 1. Bind event listeners immediately so the UI is responsive even if DB connection fails
     setupGlobalEventListeners();
+
+    // Photo carousel + hero slider load in parallel (no database needed)
+    loadPhotoCarousel();
 
     try {
         await db.init();
@@ -514,7 +508,8 @@ async function hydrateSiteUI() {
         const heroSrc = state.settings.heroImage
             || (state.photos.length > 0 ? state.photos[0].url : 'Assets/Photographer_Main.jpeg');
         if (heroBgImg.getAttribute('src') !== heroSrc) heroBgImg.src = heroSrc;
-        if (!DEMO_MODE) {
+        // The photo slider (when Photo_carousel has photos) owns the cached hero image
+        if (!DEMO_MODE && carouselState.loaded && carouselState.categories.length === 0) {
             try { localStorage.setItem('nv_hero', heroSrc); } catch (e) { /* storage unavailable */ }
         }
     }
@@ -574,6 +569,7 @@ async function hydrateSiteUI() {
     // 9. Portfolio & Categories
     renderPortfolioNav();
     renderPortfolioGrid();
+    refreshPortfolioCarousel();
 
     // 10. Instagram feed cards
     renderInstagramFeedGrid();
@@ -581,7 +577,7 @@ async function hydrateSiteUI() {
     // 11. WhatsApp Floating Button Link Hydration
     const whatsappFloat = document.getElementById('whatsappFloat');
     if (whatsappFloat) {
-        const number = (state.settings.whatsappNumber || '').replace(/[^\d+]/g, '');
+        const number = (state.settings.whatsappNumber || DEFAULT_SETTINGS.whatsappNumber).replace(/\D/g, '');
         const msg = encodeURIComponent(state.settings.whatsappMessage || '');
         whatsappFloat.href = `https://wa.me/${number}?text=${msg}`;
     }
@@ -641,6 +637,7 @@ function renderPortfolioGrid() {
 
     state.filteredPhotos = photosToRender;
 
+    updateAlbumGridVisibility();
     if (photosToRender.length === 0) {
         grid.innerHTML = `
             <div class="gallery-empty">
@@ -673,6 +670,7 @@ function renderPortfolioGrid() {
         `;
 
         item.addEventListener('click', () => {
+            state.filteredPhotos = photosToRender;
             openLightbox(index);
         });
 
@@ -696,7 +694,7 @@ function openLightbox(index) {
 
     // Find category label
     const album = state.albums.find(a => a.id === photo.albumId);
-    const categoryLabel = album ? album.name : 'Fine Art';
+    const categoryLabel = photo.categoryLabel || (album ? album.name : 'Fine Art');
 
     // Set content
     lightboxImg.src = photo.url;
@@ -804,8 +802,7 @@ function readEnquiry() {
         eventType:   val('contactEventType'),
         requirement: val('contactRequirement'),
         date:        val('contactDate'),
-        message:     val('contactMessage'),
-        website:     val('contactWebsite') // honeypot
+        message:     val('contactMessage')
     };
 }
 
@@ -822,21 +819,9 @@ function enquiryLines(enquiry) {
 }
 
 if (contactForm) {
-    const emailInput = document.getElementById('contactEmail');
-    const phoneInput = document.getElementById('contactPhone');
-    [emailInput, phoneInput].forEach(el => el.addEventListener('input', () => emailInput.setCustomValidity('')));
-
-    contactForm.addEventListener('submit', async (event) => {
+    contactForm.addEventListener('submit', (event) => {
         event.preventDefault();
-        const via = event.submitter?.value || 'email';
         const enquiry = readEnquiry();
-
-        // Need at least one way to reply
-        if (!enquiry.email && !enquiry.phone) {
-            emailInput.setCustomValidity('Please enter an email address or a phone number.');
-            emailInput.reportValidity();
-            return;
-        }
         if (enquiry.date && contactDateInput.min && enquiry.date < contactDateInput.min) {
             contactDateInput.setCustomValidity('Please choose a date from today onwards.');
             contactDateInput.reportValidity();
@@ -844,34 +829,11 @@ if (contactForm) {
             return;
         }
 
-        if (via === 'whatsapp') {
-            const number = (state.settings.whatsappNumber || DEFAULT_SETTINGS.whatsappNumber).replace(/[^\d+]/g, '');
-            window.open(`https://wa.me/${number}?text=${encodeURIComponent(enquiryLines(enquiry).join('\n'))}`, '_blank', 'noopener,noreferrer');
-            trackEvent('generate_lead', { method: 'whatsapp', event_type: enquiry.eventType || 'not set' });
-            contactForm.reset();
-            setFormStatus('WhatsApp opened with your enquiry. Press send there to reach us.', 'success');
-            return;
-        }
-
-        // Email: send through the server; fall back to the visitor's email app
-        const buttons = contactForm.querySelectorAll('button[type="submit"]');
-        buttons.forEach(b => { b.disabled = true; });
-        setFormStatus('Sending…', '');
-        try {
-            const res = await db.sendEnquiry(enquiry);
-            if (!res || !res.success) throw new Error(res?.error || 'Send failed');
-            trackEvent('generate_lead', { method: 'email', event_type: enquiry.eventType || 'not set' });
-            contactForm.reset();
-            setFormStatus(`Thank you${enquiry.name ? ', ' + enquiry.name.split(' ')[0] : ''}! Your enquiry has been sent. We will get back to you soon.`, 'success');
-        } catch (err) {
-            trackEvent('generate_lead', { method: 'email_app', event_type: enquiry.eventType || 'not set' });
-            const studioEmail = state.settings.studioEmail || DEFAULT_SETTINGS.studioEmail;
-            const subject = `Photography enquiry${enquiry.eventType ? ' – ' + enquiry.eventType : ''}${enquiry.name ? ' from ' + enquiry.name : ''}`;
-            window.location.href = `mailto:${studioEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(enquiryLines(enquiry).join('\n'))}`;
-            setFormStatus(`We opened your email app with the enquiry filled in. If nothing opened, email us at ${studioEmail}.`, 'success');
-        } finally {
-            buttons.forEach(b => { b.disabled = false; });
-        }
+        const number = (state.settings.whatsappNumber || DEFAULT_SETTINGS.whatsappNumber).replace(/\D/g, '');
+        window.open(`https://wa.me/${number}?text=${encodeURIComponent(enquiryLines(enquiry).join('\n'))}`, '_blank', 'noopener,noreferrer');
+        trackEvent('generate_lead', { method: 'whatsapp', event_type: enquiry.eventType || 'not set' });
+        contactForm.reset();
+        setFormStatus('WhatsApp opened with your enquiry. Press send there to reach us.', 'success');
     });
 }
 
@@ -1818,7 +1780,7 @@ function setupGlobalEventListeners() {
     });
 
     // Close mobile menu on links click
-    const links = navLinks.querySelectorAll('a');
+    const links = navLinks.querySelectorAll('a[href^="#"]');
     links.forEach(link => {
         link.addEventListener('click', () => {
             navLinks.classList.remove('active');
@@ -1989,8 +1951,12 @@ function renderPackages() {
                 <h3 class="package-name">${escapeHtml(pkg.name)}</h3>
                 ${pkg.tagline ? `<p class="package-tagline">${escapeHtml(pkg.tagline)}</p>` : ''}
                 <div class="package-price">${priceHtml}</div>
-                ${highlights ? `<ul class="package-highlights">${highlights}</ul>` : ''}
-                ${includes ? `<ul class="package-includes">${includes}</ul>` : ''}
+                ${highlights || includes ? `
+                <button type="button" class="package-toggle" aria-expanded="false">What's included</button>
+                <div class="package-details">
+                    ${highlights ? `<ul class="package-highlights">${highlights}</ul>` : ''}
+                    ${includes ? `<ul class="package-includes">${includes}</ul>` : ''}
+                </div>` : ''}
                 <a href="#contact" class="package-cta" data-package-index="${index}">${escapeHtml(pkg.ctaLabel || 'Check my date')}</a>
             </article>`;
     }).join('');
@@ -2007,12 +1973,15 @@ function renderPackages() {
                     : 'Every celebration is different, so we do not sell one-size-fits-all packages. Tell us about your event and we will put together the package that fits your day and your budget.'}</p>
             </div>
             <div>
-                <ul class="package-includes">
-                    <li>Coverage hours that match your schedule</li>
-                    <li>Photography, videography, or both</li>
-                    <li>Locations across Kitchener, Waterloo, Cambridge and beyond</li>
-                    <li>A clear quote before you book, with no hidden extras</li>
-                </ul>
+                <button type="button" class="package-toggle" aria-expanded="false">What we can tailor</button>
+                <div class="package-details">
+                    <ul class="package-includes">
+                        <li>Coverage hours that match your schedule</li>
+                        <li>Photography, videography, or both</li>
+                        <li>Locations across Kitchener, Waterloo, Cambridge and beyond</li>
+                        <li>A clear quote before you book, with no hidden extras</li>
+                    </ul>
+                </div>
                 <a href="#contact" class="package-cta" id="tailoredPackageCta">Get a custom quote</a>
             </div>
         </article>`;
@@ -2020,6 +1989,9 @@ function renderPackages() {
     grid.style.setProperty('--plan-cols', Math.min(Math.max(packages.length, 1), 3));
     grid.innerHTML = planCards + tailoredCard;
 
+    grid.querySelectorAll('.package-toggle').forEach(btn => {
+        btn.addEventListener('click', () => toggleDisclosure(btn, btn.closest('.package-card')));
+    });
     grid.querySelectorAll('.package-cta[data-package-index]').forEach(btn => {
         btn.addEventListener('click', () => prefillEnquiry(packages[Number(btn.dataset.packageIndex)]));
     });
@@ -2071,6 +2043,12 @@ function renderStories() {
             state.currentFilter = btn.dataset.album;
             renderPortfolioNav();
             renderPortfolioGrid();
+            const album = state.albums.find(a => a.slug === btn.dataset.album);
+            const tab = album && carouselState.categories.find(c => c.albumIds?.includes(album.id));
+            if (tab) {
+                carouselState.active = tab.slug;
+                refreshPortfolioCarousel();
+            }
             document.getElementById('gallery').scrollIntoView({ behavior: 'smooth' });
         });
     });
@@ -2122,6 +2100,18 @@ function renderFaqs() {
             <summary class="faq-question">${escapeHtml(faq.q)}</summary>
             <div class="faq-answer">${linesToList(faq.a).map(p => `<p>${escapeHtml(p)}</p>`).join('')}</div>
         </details>`).join('');
+
+    // Accordion: opening one answer closes the others
+    list.querySelectorAll('.faq-item').forEach(item => {
+        item.addEventListener('toggle', () => {
+            if (!item.open) return;
+            list.querySelectorAll('.faq-item[open]').forEach(other => { if (other !== item) other.open = false; });
+        });
+    });
+    const faqToggleLabel = document.querySelector('#faqToggle span');
+    if (faqToggleLabel && document.getElementById('faqToggle').getAttribute('aria-expanded') !== 'true') {
+        faqToggleLabel.textContent = `Show questions (${faqs.length})`;
+    }
 
     // FAQ structured data so Google can show the answers in search results
     const schemaEl = document.getElementById('faqSchema');
@@ -2442,20 +2432,37 @@ async function compressImage(file) {
 }
 
 // ==========================================================================
-// Service cards → pre-filled enquiry
+// Service cards: on phones the name expands to show the description;
+// on larger screens the whole card starts an enquiry.
 // ==========================================================================
+const phoneQuery = window.matchMedia('(max-width: 576px)');
+
+function enquireAboutService(card) {
+    const eventType = card.dataset.eventType;
+    const select = document.getElementById('contactEventType');
+    if (select) select.value = eventType;
+    const serviceName = card.querySelector('.service-name')?.textContent.trim() || eventType;
+    const message = document.getElementById('contactMessage');
+    if (message && !message.value.trim()) message.value = `Hi! I'd like to ask about ${serviceName.toLowerCase()}.`;
+    trackEvent('select_service', { event_type: eventType });
+    document.getElementById('contact').scrollIntoView({ behavior: 'smooth' });
+    setTimeout(() => document.getElementById('contactName')?.focus({ preventScroll: true }), 600);
+}
+
+// Expand/collapse helper shared by services and packages
+function toggleDisclosure(button, container) {
+    const open = button.getAttribute('aria-expanded') !== 'true';
+    button.setAttribute('aria-expanded', String(open));
+    container.classList.toggle('is-open', open);
+}
+
 document.querySelectorAll('.service-card[data-event-type]').forEach(card => {
-    card.addEventListener('click', () => {
-        const eventType = card.dataset.eventType;
-        const select = document.getElementById('contactEventType');
-        if (select) select.value = eventType;
-        const message = document.getElementById('contactMessage');
-        const serviceName = card.querySelector('.service-name')?.textContent.trim() || eventType;
-        if (message && !message.value.trim()) message.value = `Hi! I'd like to ask about ${serviceName.toLowerCase()}.`;
-        trackEvent('select_service', { event_type: eventType });
-        document.getElementById('contact').scrollIntoView({ behavior: 'smooth' });
-        setTimeout(() => document.getElementById('contactName')?.focus({ preventScroll: true }), 600);
+    const head = card.querySelector('.service-head');
+    head.addEventListener('click', () => {
+        if (phoneQuery.matches) toggleDisclosure(head, card);
+        else enquireAboutService(card);
     });
+    card.querySelector('.service-link').addEventListener('click', () => enquireAboutService(card));
 });
 
 // ==========================================================================
@@ -2490,4 +2497,250 @@ document.addEventListener('click', (e) => {
     else if (href.startsWith('mailto:')) trackEvent('contact_click', { method: 'email' });
     else if (link.id === 'whatsappFloat') trackEvent('contact_click', { method: 'whatsapp_button' });
     else if (link.dataset.track) trackEvent('cta_click', { location: link.dataset.track });
+    else if (link.dataset.social || link.id === 'instaFollowBtn') trackEvent('social_click', { network: link.dataset.social || 'instagram' });
 });
+
+// FAQ on phones: the question list is folded behind one button
+const faqToggle = document.getElementById('faqToggle');
+if (faqToggle) {
+    faqToggle.addEventListener('click', () => {
+        const wrap = faqToggle.closest('.faq-wrap');
+        toggleDisclosure(faqToggle, wrap);
+        const count = getContentList('faqs').length;
+        faqToggle.querySelector('span').textContent = wrap.classList.contains('is-open') ? 'Hide questions' : `Show questions (${count})`;
+    });
+}
+
+// ==========================================================================
+// Photo carousel & hero slider
+// Photos come from the Photo_carousel folder (one sub-folder per category),
+// listed by api/carousel.php. Add a folder or photos and they appear here.
+// ==========================================================================
+const CAROUSEL_API = 'api/carousel.php';
+const HERO_SLIDE_LIMIT = 8;
+const HERO_SLIDE_SECONDS = 6;
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+// folderCategories: from Photo_carousel; categories: folders + admin albums combined
+const carouselState = { folderCategories: [], categories: [], active: 'all', loaded: false };
+
+async function loadPhotoCarousel() {
+    try {
+        const res = await fetch(CAROUSEL_API);
+        if (!res.ok || !(res.headers.get('content-type') || '').includes('json')) throw new Error('Carousel API unavailable');
+        const data = await res.json();
+        carouselState.folderCategories = (data.categories || []).filter(c => c.photos && c.photos.length);
+    } catch (err) {
+        console.warn('Photo carousel folder not loaded:', err.message);
+        carouselState.folderCategories = [];
+    }
+    carouselState.loaded = true;
+    refreshPortfolioCarousel();
+}
+
+// Folder categories + albums added in the admin panel, as one list of tabs.
+// An admin album with the same name as a folder joins that folder's tab.
+function combinedCategories() {
+    const cats = carouselState.folderCategories.map(c => ({ ...c, photos: [...c.photos], albumIds: [] }));
+    state.albums.forEach(album => {
+        const photos = state.photos
+            .filter(p => p.albumId === album.id && p.url)
+            .map(p => ({ large: p.url, thumb: p.url, alt: p.altText || `${album.name} by North Vows Photography`, width: null, height: null }));
+        if (!photos.length) return;
+        const existing = cats.find(c => c.name.toLowerCase() === album.name.trim().toLowerCase());
+        if (existing) {
+            existing.photos.push(...photos);
+            existing.albumIds.push(album.id);
+        } else {
+            cats.push({ name: album.name, slug: `album-${album.slug}`, photos, albumIds: [album.id] });
+        }
+    });
+    return cats;
+}
+
+function refreshPortfolioCarousel() {
+    carouselState.categories = combinedCategories();
+    const carousel = document.getElementById('photoCarousel');
+    if (!carouselState.categories.length) {
+        carousel.hidden = true;
+        updateAlbumGridVisibility();
+        return;
+    }
+    if (!carouselState.categories.some(c => c.slug === carouselState.active)) carouselState.active = 'all';
+    renderCarouselTabs();
+    renderCarouselTrack();
+    buildHeroSlider();
+    updateAlbumGridVisibility();
+}
+
+// "All" mixes the categories in turn (wedding, family, portrait, wedding, …)
+// so visitors see the range of work straight away.
+function interleave(lists) {
+    const queues = lists.map(l => l.slice());
+    const mixed = [];
+    while (queues.some(q => q.length)) {
+        queues.forEach(q => { if (q.length) mixed.push(q.shift()); });
+    }
+    return mixed;
+}
+
+function carouselPhotos(slug) {
+    const withCategory = c => c.photos.map(p => ({ ...p, category: c.name }));
+    if (slug === 'all') return interleave(carouselState.categories.map(withCategory));
+    const cat = carouselState.categories.find(c => c.slug === slug);
+    return cat ? withCategory(cat) : [];
+}
+
+function renderCarouselTabs() {
+    const tabs = document.getElementById('carouselTabs');
+    const cats = carouselState.categories;
+    // One category needs no tabs; show them once there are two or more
+    tabs.hidden = cats.length < 2;
+    tabs.innerHTML = '';
+    [{ slug: 'all', name: 'All' }, ...cats].forEach(cat => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'filter-btn' + (cat.slug === carouselState.active ? ' active' : '');
+        btn.setAttribute('role', 'tab');
+        btn.setAttribute('aria-selected', String(cat.slug === carouselState.active));
+        btn.textContent = cat.name;
+        btn.addEventListener('click', () => {
+            carouselState.active = cat.slug;
+            renderCarouselTabs();
+            renderCarouselTrack();
+            trackEvent('carousel_category', { category: cat.name });
+        });
+        tabs.appendChild(btn);
+    });
+    document.getElementById('photoCarousel').hidden = false;
+}
+
+function renderCarouselTrack() {
+    const track = document.getElementById('carouselTrack');
+    const photos = carouselPhotos(carouselState.active);
+    track.innerHTML = photos.map((p, i) => `
+        <button type="button" class="carousel-item" data-index="${i}" aria-label="Open photo ${i + 1} of ${photos.length}: ${escapeHtml(p.category)}">
+            <img src="${escapeHtml(p.thumb)}" alt="${escapeHtml(p.alt)}" loading="${i < 4 ? 'eager' : 'lazy'}" decoding="async"
+                 ${p.width && p.height ? `width="${p.width}" height="${p.height}"` : ''}>
+        </button>`).join('');
+    track.scrollLeft = 0;
+
+    track.querySelectorAll('.carousel-item').forEach(item => {
+        item.addEventListener('click', () => {
+            state.filteredPhotos = photos.map((p, i) => ({
+                url: p.large,
+                altText: p.alt,
+                title: p.category,
+                categoryLabel: `${i + 1} / ${photos.length}`
+            }));
+            openLightbox(Number(item.dataset.index));
+        });
+    });
+    updateCarouselControls();
+}
+
+function updateCarouselControls() {
+    const track = document.getElementById('carouselTrack');
+    const max = track.scrollWidth - track.clientWidth;
+    document.getElementById('carouselPrev').disabled = track.scrollLeft <= 2;
+    document.getElementById('carouselNext').disabled = track.scrollLeft >= max - 2;
+    const progress = document.getElementById('carouselProgress');
+    const visible = track.scrollWidth ? track.clientWidth / track.scrollWidth : 1;
+    progress.style.width = `${Math.min(100, visible * 100)}%`;
+    progress.style.transform = `translateX(${max > 0 ? (track.scrollLeft / max) * ((1 - visible) / visible) * 100 : 0}%)`;
+    document.querySelector('.carousel-viewport').classList.toggle('no-scroll', max <= 2);
+}
+
+(function bindCarouselControls() {
+    const track = document.getElementById('carouselTrack');
+    if (!track) return;
+    const step = () => Math.max(track.clientWidth * 0.85, 240);
+    document.getElementById('carouselPrev').addEventListener('click', () => track.scrollBy({ left: -step(), behavior: 'smooth' }));
+    document.getElementById('carouselNext').addEventListener('click', () => track.scrollBy({ left: step(), behavior: 'smooth' }));
+    track.addEventListener('scroll', () => window.requestAnimationFrame(updateCarouselControls), { passive: true });
+    window.addEventListener('resize', updateCarouselControls);
+    track.addEventListener('keydown', (e) => {
+        if (e.key === 'ArrowRight') { e.preventDefault(); track.scrollBy({ left: step(), behavior: 'smooth' }); }
+        if (e.key === 'ArrowLeft')  { e.preventDefault(); track.scrollBy({ left: -step(), behavior: 'smooth' }); }
+    });
+})();
+
+// The old album grid is only a fallback: admin albums now appear as carousel tabs
+function updateAlbumGridVisibility() {
+    const hide = carouselState.categories.length > 0 || state.photos.length === 0;
+    document.getElementById('galleryFilters').hidden = hide;
+    document.getElementById('galleryGrid').hidden = hide;
+}
+
+// --- Hero slider: a mix of categories, crossfading every few seconds ---
+let heroTimer = null;
+let heroIndex = 0;
+
+let heroSlideKey = '';
+
+function pickHeroSlides() {
+    // Round-robin across categories so every category is represented
+    return interleave(carouselState.categories.map(c => c.photos)).slice(0, HERO_SLIDE_LIMIT);
+}
+
+function buildHeroSlider() {
+    const slides = pickHeroSlides();
+    const key = slides.map(p => p.large).join('|');
+    if (!slides.length || key === heroSlideKey) return;
+    heroSlideKey = key;
+    heroIndex = 0;
+    const bg = document.getElementById('heroSlides');
+    const frame = document.getElementById('heroFrameSlides');
+    const dots = document.getElementById('heroDots');
+    const imgs = (cls) => slides.map((p, i) =>
+        `<img class="${cls}${i === 0 ? ' is-active' : ''}" src="${escapeHtml(i === 0 ? p.large : '')}" data-src="${escapeHtml(p.large)}" alt="" decoding="async"${i === 0 ? ' fetchpriority="high"' : ''}>`).join('');
+    bg.innerHTML = imgs('hero-slide');
+    frame.innerHTML = imgs('hero-frame-slide');
+    dots.innerHTML = slides.length > 1 ? slides.map((_, i) =>
+        `<button type="button" class="hero-dot${i === 0 ? ' is-active' : ''}" aria-label="Show photo ${i + 1}"></button>`).join('') : '';
+    dots.querySelectorAll('.hero-dot').forEach((dot, i) => dot.addEventListener('click', () => { showHeroSlide(i); restartHeroTimer(); }));
+
+    document.getElementById('heroFrame').hidden = false;
+    document.getElementById('home').classList.add('has-slides');
+    try { if (!DEMO_MODE) localStorage.setItem('nv_hero', slides[0].large); } catch (e) { /* storage unavailable */ }
+
+    // Load the remaining slides once the page has settled
+    const loadRest = () => document.querySelectorAll('#home img[data-src]').forEach(img => { if (!img.getAttribute('src')) img.src = img.dataset.src; });
+    if (document.readyState === 'complete') setTimeout(loadRest, 800);
+    else window.addEventListener('load', () => setTimeout(loadRest, 800));
+
+    restartHeroTimer();
+}
+
+document.addEventListener('visibilitychange', restartHeroTimer);
+
+function showHeroSlide(i) {
+    heroIndex = i;
+    ['.hero-slide', '.hero-frame-slide', '.hero-dot'].forEach(sel => {
+        document.querySelectorAll(sel).forEach((el, j) => {
+            if (el.tagName === 'IMG' && j === i && !el.getAttribute('src')) el.src = el.dataset.src;
+            el.classList.toggle('is-active', j === i);
+        });
+    });
+}
+
+function restartHeroTimer() {
+    clearInterval(heroTimer);
+    const count = document.querySelectorAll('.hero-slide').length;
+    if (count < 2 || reducedMotion.matches || document.hidden) return;
+    heroTimer = setInterval(() => showHeroSlide((heroIndex + 1) % count), HERO_SLIDE_SECONDS * 1000);
+}
+
+// --- Lightbox: swipe left/right on touch screens ---
+(function bindLightboxSwipe() {
+    const box = document.getElementById('lightbox');
+    if (!box) return;
+    let startX = null;
+    box.addEventListener('touchstart', (e) => { startX = e.touches[0].clientX; }, { passive: true });
+    box.addEventListener('touchend', (e) => {
+        if (startX === null) return;
+        const dx = e.changedTouches[0].clientX - startX;
+        if (Math.abs(dx) > 50) (dx < 0 ? showNextPhoto : showPrevPhoto)();
+        startX = null;
+    }, { passive: true });
+})();

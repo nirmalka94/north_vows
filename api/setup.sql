@@ -65,3 +65,6 @@ UPDATE `nv_settings` SET `setting_value` = 'Kitchener · Waterloo · Cambridge' 
 UPDATE `nv_settings` SET `setting_value` = 'Wedding & Family | Photographer' WHERE `setting_key` = 'heroTitle';
 UPDATE `nv_settings` SET `setting_value` = 'Natural, timeless photos of your wedding, your family and the moments in between. Based in Kitchener-Waterloo, available across Canada.' WHERE `setting_key` = 'heroDesc';
 UPDATE `nv_settings` SET `setting_value` = 'Kitchener wedding photographer, Waterloo wedding photographer, Cambridge wedding photographer, Kitchener-Waterloo photographer, family photographer Kitchener, engagement photos Waterloo, headshots Kitchener, Ontario wedding photographer' WHERE `setting_key` = 'siteKeywords';
+
+-- Instagram handle (Oct 2026): real account is @thenorthvows.
+UPDATE `nv_settings` SET `setting_value` = '@thenorthvows' WHERE `setting_key` = 'instaHandle';

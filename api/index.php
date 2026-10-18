@@ -174,7 +174,6 @@ switch ($action) {
                 $hasInstaToken = !empty($r['setting_value']);
                 continue;
             }
-            if (strpos($r['setting_key'], 'enquiry_rate_') === 0) continue; // internal rate-limit records
             if (!in_array($r['setting_key'], $sensitiveKeys, true)) {
                 $out[$r['setting_key']] = $r['setting_value'];
             }
@@ -195,66 +194,6 @@ switch ($action) {
              ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)'
         );
         $stmt->execute([$key, $value]);
-        respond(200, ['success' => true]);
-
-    // ── PUBLIC CONTACT FORM ──────────────────────────────────────────────────
-    // Emails a website enquiry to the studio address saved in Admin → Settings.
-    case 'send_enquiry':
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') respond(405, ['error' => 'POST required']);
-        $body = json_decode(file_get_contents('php://input'), true) ?: [];
-
-        // Honeypot: bots fill the hidden "website" field. Pretend success.
-        if (!empty($body['website'])) respond(200, ['success' => true]);
-
-        $clean = function ($v, int $max) {
-            $v = trim((string)($v ?? ''));
-            $v = str_replace(["\r", "\0"], '', $v);
-            return mb_substr($v, 0, $max);
-        };
-        $name        = $clean($body['name'] ?? '', 120);
-        $email       = $clean($body['email'] ?? '', 200);
-        $phone       = $clean($body['phone'] ?? '', 40);
-        $eventType   = $clean($body['eventType'] ?? '', 80);
-        $requirement = $clean($body['requirement'] ?? '', 80);
-        $date        = $clean($body['date'] ?? '', 20);
-        $message     = $clean($body['message'] ?? '', 5000);
-
-        if ($name === '') respond(400, ['error' => 'Please enter your name.']);
-        if ($email === '' && $phone === '') respond(400, ['error' => 'Please give an email address or phone number.']);
-        if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) respond(400, ['error' => 'Please enter a valid email address.']);
-
-        // Basic flood protection: at most 5 enquiries per IP per hour
-        $ipKey = 'enquiry_rate_' . md5($_SERVER['REMOTE_ADDR'] ?? 'unknown');
-        $rate  = json_decode(getSetting($pdo, $ipKey) ?? '[]', true) ?: [];
-        $rate  = array_values(array_filter($rate, fn($t) => $t > time() - 3600));
-        if (count($rate) >= 5) respond(429, ['error' => 'Too many messages. Please try again later or contact us on WhatsApp.']);
-        $rate[] = time();
-        upsertSetting($pdo, $ipKey, json_encode($rate));
-
-        // Admin → Settings → Studio Email; falls back to the studio's main inbox
-        $to = getSetting($pdo, 'studioEmail');
-        if (!$to || !filter_var($to, FILTER_VALIDATE_EMAIL)) $to = 'thenorthvows@gmail.com';
-
-        $lines = ["New enquiry from the North Vows website", ""];
-        $lines[] = "Name: $name";
-        if ($email !== '')       $lines[] = "Email: $email";
-        if ($phone !== '')       $lines[] = "Phone: $phone";
-        if ($eventType !== '')   $lines[] = "Event type: $eventType";
-        if ($requirement !== '') $lines[] = "Requirement: $requirement";
-        if ($date !== '')        $lines[] = "Event date: $date";
-        if ($message !== '')     { $lines[] = ""; $lines[] = $message; }
-
-        $host    = preg_replace('/^www\./', '', $_SERVER['HTTP_HOST'] ?? 'northvowsphotography.com');
-        $host    = preg_replace('/[^a-z0-9.\-]/i', '', $host);
-        $subject = 'Website enquiry' . ($eventType !== '' ? " - $eventType" : '') . " from $name";
-        $headers = [
-            'From: North Vows Website <no-reply@' . $host . '>',
-            'Content-Type: text/plain; charset=UTF-8',
-        ];
-        if ($email !== '') $headers[] = 'Reply-To: ' . $email;
-
-        $sent = @mail($to, '=?UTF-8?B?' . base64_encode($subject) . '?=', implode("\n", $lines), implode("\r\n", $headers));
-        if (!$sent) respond(500, ['error' => 'Email could not be sent.']);
         respond(200, ['success' => true]);
 
     case 'change_passcode':
